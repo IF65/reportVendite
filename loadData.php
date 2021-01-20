@@ -6,8 +6,8 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2020-09-16', $timeZone);
-$dataFine = new DateTime('2020-10-15', $timeZone);
+$dataInizio = new DateTime('2021-01-01', $timeZone);
+$dataFine = new DateTime('2021-01-18', $timeZone);
 
 // identificazione server
 // -------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ try {
                            0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, 
                            sum(totaltaxableamount) totaltaxableamount, '' fidelityCard 
                     from mtx.idc 
-                    where ddate = :data and binary recordtype = 'S' and recordcode1 = 1 and store = '0101'
+                    where ddate = :data and binary recordtype = 'S' and recordcode1 = 1
                     group by 1,2,3,4,5,6
                     having totalamount <> 0";
     $h_load_query = $sourceDb->prepare( $stmt );
