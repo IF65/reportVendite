@@ -1,0 +1,13 @@
+{
+    "name": "if65/report-vendite",
+    "authors": [
+        {
+            "name": "Marco Gnecchi",
+            "email": "marco.gnecchi@icloud.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7.0",
+        "phpoffice/phpspreadsheet": "^1.14"
+    }
+}
