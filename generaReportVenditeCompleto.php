@@ -17,21 +17,23 @@ use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use GuzzleHttp\Client;
 
-// inizio e fine settimana corrente
-$dataCorrenteAC = new DateTime('2020-09-30');
-$dataInizioAC = new DateTime('2020-01-01');
-$dataFineAC = new DateTime('2020-09-30');
-$dataCorrenteAP = new DateTime('2019-09-30');
-$dataInizioAP = new DateTime('2019-01-01');
-$dataFineAP = new DateTime('2019-09-30');
 
-$hostname = '10.11.14.177';
+$timeZone = new DateTimeZone('Europe/Rome');
+
+
+// inizio e fine settimana corrente
+$dataCorrenteAC = new DateTime('2021-01-16', $timeZone);
+$dataInizioAC = new DateTime('2021-01-11', $timeZone);
+$dataFineAC = new DateTime('2021-01-17', $timeZone);
+$dataCorrenteAP = new DateTime('2020-01-18', $timeZone);
+$dataInizioAP = new DateTime('2020-01-13', $timeZone);
+$dataFineAP = new DateTime('2020-01-19', $timeZone);
+
+$hostname = 'localhost';
 $user = 'root';
 $password = 'mela';
 
 $repartoIndefinito = 'NON DEFINITO';
-
-$timeZone = new DateTimeZone('Europe/Rome');
 
 $plusOneDay = new DateInterval('P1D');
 
@@ -152,7 +154,7 @@ try {
             ],
         ];
 
-        $debugList = ['0101' => 'PIAVE']; //$shopList
+        $debugList = ['0101' => 'PIAVE', '0102' => 'MARCHETTI']; //$shopList
         $firstSheet = true;
         foreach ($debugList as $sedeSelezionata => $sedeSelezionataDescrizione) {
             echo "$sedeSelezionata\n";
@@ -289,7 +291,8 @@ try {
             $penetrazioneSubtotaleRiclassificataAC = [];
             $penetrazioneSubtotaleRiclassificataAP = [];
 
-            riclassificazioneDati( $dataCorrenteAC, $dataCorrenteAC, $dataCorrenteAP, $dataCorrenteAP );
+            //riclassificazioneDati( $dataCorrenteAC, $dataCorrenteAC, $dataCorrenteAP, $dataCorrenteAP );
+	        riclassificazioneDati( $dataInizioAC, $dataFineAC, $dataInizioAP, $dataFineAP );
 
             $originY = 1;
             $originX = 1;

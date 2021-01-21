@@ -13,22 +13,23 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 // sede selezionata
-$sedeSelezionata = '0101';
+$sedeSelezionata = '0102';
+
+$timeZone = new DateTimeZone('Europe/Rome');
 
 // inizio e fine settimana corrente
-$dataCorrente = new DateTime('2020-09-27');
-$dataInizioAC = new DateTime('2020-09-21');
-$dataFineAC = new DateTime('2020-09-27');
-$dataInizioAP = new DateTime('2019-09-23');
-$dataFineAP = new DateTime('2019-09-29');
+$dataCorrente = new DateTime('2021-01-16', $timeZone);
 
-$hostname = '10.11.14.128';
+$dataInizioAC = new DateTime('2021-01-11', $timeZone);
+$dataFineAC = new DateTime('2021-01-17', $timeZone);
+$dataInizioAP = new DateTime('2020-01-13', $timeZone);
+$dataFineAP = new DateTime('2020-01-19', $timeZone);
+
+$hostname = 'localhost';
 $user = 'root';
 $password = 'mela';
 
 $repartoIndefinito = 'NON DEFINITO';
-
-$timeZone = new DateTimeZone('Europe/Rome');
 
 $plusOneDay = new DateInterval('P1D');
 

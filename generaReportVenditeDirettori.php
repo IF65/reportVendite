@@ -21,7 +21,7 @@ $dataCorrenteAP = new DateTime('2019-09-29');
 $dataInizioAP = new DateTime('2019-09-23');
 $dataFineAP = new DateTime('2019-09-29');
 
-$hostname = '10.11.14.128';
+$hostname = 'localhost';
 $user = 'root';
 $password = 'mela';
 
