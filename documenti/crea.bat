@@ -1,0 +1,6 @@
+C:\xampp\mysql\bin\mysql -e "select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, sum(totaltaxableamount) totaltaxableamount, '' fidelityCard from mtx.idc where ddate = '2021-01-20' and binary recordtype = 'S' and recordcode1 = 1 group by 1,2,3,4,5,6 having totalamount <> 0" -u root -pmela mtx > c:\20210120.txt
+
+C:\xampp\mysql\bin\mysql -e "select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, sum(totaltaxableamount) totaltaxableamount, '' fidelityCard from mtx.idc where ddate = '2021-01-21' and binary recordtype = 'S' and recordcode1 = 1 group by 1,2,3,4,5,6 having totalamount <> 0" -u root -pmela mtx > c:\20210121.txt
+
+C:\xampp\mysql\bin\mysql -e "select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, sum(totaltaxableamount) totaltaxableamount, '' fidelityCard from mtx.idc where ddate = '2021-01-22' and binary recordtype = 'S' and recordcode1 = 1 group by 1,2,3,4,5,6 having totalamount <> 0" -u root -pmela mtx > c:\20210122.txt
+

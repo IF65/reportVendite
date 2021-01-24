@@ -17,6 +17,7 @@ $sourceHostname = '10.11.14.128';
 $sourceUser = 'root';
 $sourcePassword = 'mela';
 
+
 try {
 	// apro il datasource
 	// -------------------------------------------------------------------------------
