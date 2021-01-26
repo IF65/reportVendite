@@ -30,6 +30,8 @@ $dataCorrenteAP = new DateTime('2020-01-19', $timeZone);
 $dataInizioAP = new DateTime('2020-01-13', $timeZone);
 $dataFineAP = new DateTime('2020-01-19', $timeZone);
 
+$messaggio = "Settimana 2";
+
 // parametri per l'accesso all'host
 // -------------------------------------------------------------------------------
 $hostname = 'localhost';
@@ -166,9 +168,6 @@ try {
 
     }
 
-    // debug
-	//$shopList = ['0101' => 'PIAVE', '0102' => 'MARCHETTI', '0103' => 'COLLEBEATO', '0104' => 'ROSA']; //$shopList
-
     // creazione workbook
     $originX = 1;
     $originY = 1;
@@ -270,7 +269,7 @@ try {
 		    $sheet->getStyle( RXY($originX, $originY, $currentColumn, $originY) )->applyFromArray( $styleTitles );
 		    $sheet->getStyle( RXY($originX, $originY, $currentColumn, $originY))->applyFromArray( $styleBorderArray );
 		    $sheet->getStyle( RXY($originX, $currentRow, $currentColumn, $currentRow) )->getAlignment()->setWrapText( true );
-		    $sheet->setCellValueExplicitByColumnAndRow($originX, $originY, 'Messaggio', DataType::TYPE_STRING);
+		    $sheet->setCellValueExplicitByColumnAndRow($originX, $originY, $messaggio, DataType::TYPE_STRING);
 		    $sheet->getRowDimension( $originY )->setRowHeight( 48 );
 
 		    $currentRow++;
@@ -400,14 +399,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($penetrazioneAC_XY<>0, $incassoAC_XY/$penetrazioneAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $scontrinoMedioAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Scontrino Medio A.P.
 		    $currentColumn++;
 		    $formula = "=IF($penetrazioneAP_XY<>0, $incassoAP_XY/$penetrazioneAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $scontrinoMedioAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Scontrino Medio %
@@ -448,14 +447,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($pezziAC_XY<>0, $incassoAC_XY/$pezziAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $prezzoMedioAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Prezzo Medio A.P.
 		    $currentColumn++;
 		    $formula = "=IF($pezziAP_XY<>0, $incassoAP_XY/$pezziAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $prezzoMedioAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Prezzo Medio %
@@ -468,14 +467,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($penetrazioneAC_XY<>0, $pezziAC_XY/$penetrazioneAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $pezziClienteAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Pezzi per cliente A.P.
 		    $currentColumn++;
 		    $formula = "=IF($penetrazioneAP_XY<>0, $pezziAP_XY/$penetrazioneAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $pezziClienteAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Pezzi per Cliente %
@@ -492,7 +491,7 @@ try {
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $oreAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Ore A.P.
@@ -503,7 +502,7 @@ try {
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $oreAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Ore %
@@ -516,14 +515,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $procapiteAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Procapite A.P.
 		    $currentColumn++;
 		    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $procapiteAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Procapite %
@@ -662,14 +661,14 @@ try {
 			    $currentColumn++;
 			    $formula = "=IF($penetrazioneAC_XY<>0, $incassoAC_XY/$penetrazioneAC_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $scontrinoMedioAC_XY = XY($currentColumn, $currentRow);
 
 			    // Scontrino Medio A.P.
 			    $currentColumn++;
 			    $formula = "=IF($penetrazioneAP_XY<>0, $incassoAP_XY/$penetrazioneAP_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $scontrinoMedioAP_XY = XY($currentColumn, $currentRow);
 
 			    // Delta Scontrino Medio %
@@ -710,14 +709,14 @@ try {
 			    $currentColumn++;
 			    $formula = "=IF($pezziAC_XY<>0, $incassoAC_XY/$pezziAC_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $prezzoMedioAC_XY = XY($currentColumn, $currentRow);
 
 			    // Prezzo Medio A.P.
 			    $currentColumn++;
 			    $formula = "=IF($pezziAP_XY<>0, $incassoAP_XY/$pezziAP_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $prezzoMedioAP_XY = XY($currentColumn, $currentRow);
 
 			    // Delta Prezzo Medio %
@@ -730,14 +729,14 @@ try {
 			    $currentColumn++;
 			    $formula = "=IF($penetrazioneAC_XY<>0, $pezziAC_XY/$penetrazioneAC_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $pezziClienteAC_XY = XY($currentColumn, $currentRow);
 
 			    // Pezzi per cliente A.P.
 			    $currentColumn++;
 			    $formula = "=IF($penetrazioneAP_XY<>0, $pezziAP_XY/$penetrazioneAP_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $pezziClienteAP_XY = XY($currentColumn, $currentRow);
 
 			    // Delta Pezzi per Cliente %
@@ -754,7 +753,7 @@ try {
 			    }
 			    $formula = preg_replace('/.$/', ')', $formula);
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $oreAC_XY = XY($currentColumn, $currentRow);
 
 			    // Ore A.P.
@@ -765,7 +764,7 @@ try {
 			    }
 			    $formula = preg_replace('/.$/', ')', $formula);
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $oreAP_XY = XY($currentColumn, $currentRow);
 
 			    // Delta Ore %
@@ -778,14 +777,14 @@ try {
 			    $currentColumn++;
 			    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $procapiteAC_XY = XY($currentColumn, $currentRow);
 
 			    // Procapite A.P.
 			    $currentColumn++;
 			    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
+			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
 			    $procapiteAP_XY = XY($currentColumn, $currentRow);
 
 			    // Delta Procapite %
@@ -883,14 +882,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($clientiAC_XY<>0, $incassoAC_XY/$clientiAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $scontrinoMedioAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Scontrino Medio A.P.
 		    $currentColumn++;
 		    $formula = "=IF($clientiAP_XY<>0, $incassoAP_XY/$clientiAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $scontrinoMedioAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Scontrino Medio %
@@ -923,14 +922,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($pezziAC_XY<>0, $incassoAC_XY/$pezziAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $prezzoMedioAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Prezzo Medio A.P.
 		    $currentColumn++;
 		    $formula = "=IF($pezziAP_XY<>0, $incassoAP_XY/$pezziAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $prezzoMedioAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Prezzo Medio %
@@ -943,14 +942,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($clientiAC_XY<>0, $pezziAC_XY/$clientiAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $pezziClienteAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Pezzi per cliente A.P.
 		    $currentColumn++;
 		    $formula = "=IF($clientiAP_XY<>0, $pezziAP_XY/$clientiAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $pezziClienteAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Pezzi per Cliente %
@@ -963,14 +962,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=SUM(" . RXY( $currentColumn, $currentRow - $departmentCount - $subtotalCount, $currentColumn, $currentRow - 1 - $subtotalCount ) . ")";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $oreAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Ore A.P.
 		    $currentColumn++;
 		    $formula = "=SUM(" . RXY( $currentColumn, $currentRow - $departmentCount - $subtotalCount, $currentColumn, $currentRow - 1 - $subtotalCount ) . ")";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $oreAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Ore %
@@ -983,14 +982,14 @@ try {
 		    $currentColumn++;
 		    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $procapiteAC_XY = XY( $currentColumn, $currentRow );
 
 		    // Procapite A.P.
 		    $currentColumn++;
 		    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
 		    $procapiteAP_XY = XY( $currentColumn, $currentRow );
 
 		    // Delta Procapite %
@@ -1181,32 +1180,34 @@ try {
 
 		    riclassificazioneDati($dataInizioAC, $dataFineAC, $dataInizioAP, $dataFineAP);
 
-		    $originY = $currentRow + 1;
 		    writeDepartmentRows();
-
-		    // formattazioni bordi
-		    // -------------------------------------------------------------------------------
-		    $sheet->getStyle(RXY($originX + 4, $originY + 1, $originX + 3, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 7, $originY + 1, $originX + 6, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 10, $originY + 1, $originX + 9, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 13, $originY + 1, $originX + 12, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 16, $originY + 1, $originX + 15, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 19, $originY + 1, $originX + 17, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 22, $originY + 1, $originX + 21, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 25, $originY + 1, $originX + 24, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 28, $originY + 1, $originX + 27, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-		    $sheet->getStyle(RXY($originX + 31, $originY + 1, $originX + 30, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
 	    }
     }
 
+	// formattazioni bordi
+	// -------------------------------------------------------------------------------
+	$sheet->getStyle(RXY($originX + 3, $originY, $originX + 33, $originY))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 3, $originY + 1, $originX + 3, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 4, $originY + 1, $originX + 6, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 7, $originY + 1, $originX + 9, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 10, $originY + 1, $originX + 12, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 13, $originY + 1, $originX + 15, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 16, $originY + 1, $originX + 18, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 19, $originY + 1, $originX + 21, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 22, $originY + 1, $originX + 24, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 25, $originY + 1, $originX + 27, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 28, $originY + 1, $originX + 30, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 31, $originY + 1, $originX + 33, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
+
+
 	// formattazioni colonne
 	// -------------------------------------------------------------------------------
-	$sheet->getColumnDimensionByColumn(1)->setWidth(20.0);
+	$sheet->getColumnDimensionByColumn(1)->setWidth(15);
 	$sheet->getColumnDimensionByColumn(2)->setWidth(20.0);
-	$sheet->getColumnDimensionByColumn(3)->setWidth(30.0);
+	$sheet->getColumnDimensionByColumn(3)->setWidth(20.0);
 	$sheet->getColumnDimensionByColumn(4)->setWidth(30.0);
 	$sheet->getColumnDimensionByColumn(6)->setVisible(False);
-	$sheet->getColumnDimensionByColumn(7)->setVisible(False);
+	//$sheet->getColumnDimensionByColumn(7)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(9)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(12)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(15)->setVisible(False);
@@ -1217,7 +1218,7 @@ try {
 	$sheet->getColumnDimensionByColumn(30)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(33)->setVisible(False);
 
-	$sheet->freezePane('E17');
+	$sheet->freezePane(XY($originX + 4, $originY + 16));
 
 	$sheet->setSelectedCell('A1');
 
@@ -1225,7 +1226,11 @@ try {
 	$sheet->getPageSetup()->setFitToHeight(0);
 	$sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
 	$sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
-	$sheet->getPageSetup()->setPrintArea('D1:AH15');
+	$sheet->getPageSetup()->setPrintArea(RXY(4, $originY, 34, $originY + 14));
+	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
+	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
+	$sheet->getHeaderFooter()->setOddFooter('&L &D &T &R Pagina &P di &N');
+	$sheet->getHeaderFooter()->setEvenFooter('&L &D &T &R Pagina &P di &N');
 
 	//$sheet->getProtection()->setSheet(true);	// Needs to be set to true in order to enable any worksheet protection!
 	//$sheet->protectCells(RXY(1,15,34,$currentRow + 1), 'PHPExcel');
@@ -1233,7 +1238,7 @@ try {
 	$sheet->getCell('K15')->getCalculatedValue();
 	$sheet->getCell('L15')->getCalculatedValue();
 
-	$sheet->setAutoFilter(RXY(1, 16, 3, $currentRow));
+	$sheet->setAutoFilter(RXY(1, $originY + 15, 3, $currentRow));
 
     $writer = new Xlsx( $workBook );
     $writer->save( '/Users/if65/Desktop/if65.xlsx' );
@@ -1366,7 +1371,7 @@ function writeDepartmentRows()
     global $currentRow;
     global $subtotalCount;
     global $integerFormat, $currencyFormat, $percentageFormat;
-    global $originX, $originY;
+    global $originX;
     global $periodoRiclassificatoAC, $periodoRiclassificatoAP;
     global $sedeSelezionata, $sedeSelezionataDescrizione;
 	global $shop2Area, $shop2Type;
@@ -1405,21 +1410,14 @@ function writeDepartmentRows()
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $incassoAC, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $incassoAC_XY = XY( $currentColumn, $currentRow );
-        $incassoAC_TOT_XY = XY( $currentColumn, $originY + $departmentCount + $subtotalCount + 1 );
 
         // Vendite A.P.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $incassoAP, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $incassoAP_XY = XY( $currentColumn, $currentRow );
-        $incassoAP_TOT_XY = XY( $currentColumn, $originY + $departmentCount + $subtotalCount + 1 );
 
         // % su A.P.
         //$currentColumn++;
-        /*$formula = "=IF($incassoAP_XY<>0, ($incassoAC_XY-$incassoAP_XY)/$incassoAP_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
 	    // Clienti totali anno corrente (vengono ripetuti identici su ogni riga)
 	    $currentColumn++;
@@ -1429,17 +1427,9 @@ function writeDepartmentRows()
 
 	    // Mix % Vendite A.C.
         $currentColumn++;
-        /*$formula = "=IF($incassoAC_TOT_XY<>0, $incassoAC_XY/$incassoAC_TOT_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-        $mixIncassoAC_XY = XY( $currentColumn, $currentRow );*/
 
         // Mix % Vendite A.P.
         //$currentColumn++;
-        /*$formula = "=IF($incassoAP_TOT_XY<>0, $incassoAP_XY/$incassoAP_TOT_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-        $mixIncassoAP_XY = XY( $currentColumn, $currentRow );*/
 
 	    // Clienti totali anno precedente (vengono ripetuti identici su ogni riga)
 	    $currentColumn++;
@@ -1449,165 +1439,90 @@ function writeDepartmentRows()
 
 	    // Delta % Mix
         $currentColumn++;
-        /*$formula = "=$mixIncassoAC_XY - $mixIncassoAP_XY";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
 	    // Clienti A.C.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $penetrazioneAC, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
-        $penetrazioneAC_XY = XY( $currentColumn, $currentRow );
-        $clientiAC_XY = XY( $currentColumn, $originY + $departmentCount + $subtotalCount + 1);
 
         // Clienti A.P.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $penetrazioneAP, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
-        $penetrazioneAP_XY = XY( $currentColumn, $currentRow );
-        $clientiAP_XY = XY( $currentColumn, $originY + $departmentCount + $subtotalCount + 1);
 
         // Delta Clienti %
         $currentColumn++;
-        /*$formula = "=IF($penetrazioneAC_XY<>0, ($penetrazioneAC_XY - $penetrazioneAP_XY)/$penetrazioneAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Penetrazione % A.C.
         $currentColumn++;
-        /*$formula = "=IF($clientiAC_XY<>0, $penetrazioneAC_XY/$clientiAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-        $penetrazioneAC_P_XY = XY( $currentColumn, $currentRow );*/
 
         // Penetrazione % A.P.
         $currentColumn++;
-	    /*$formula = "=IF($clientiAP_XY<>0, $penetrazioneAP_XY/$clientiAP_XY,0)";
-		$sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		$sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-		$penetrazioneAP_P_XY = XY( $currentColumn, $currentRow );*/
 
         // Delta % Penetrazione
         $currentColumn++;
-        /*$formula = "=$penetrazioneAC_P_XY - $penetrazioneAP_P_XY";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat )*/
 
         // Scontrino Medio A.C.
         $currentColumn++;
-        /*$formula = "=IF($penetrazioneAC_XY<>0, $incassoAC_XY/$penetrazioneAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $scontrinoMedioAC_XY = XY( $currentColumn, $currentRow );*/
 
         // Scontrino Medio A.P.
         $currentColumn++;
-        /*$formula = "=IF($penetrazioneAP_XY<>0, $incassoAP_XY/$penetrazioneAP_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $scontrinoMedioAP_XY = XY( $currentColumn, $currentRow );*/
 
         // Delta Scontrino Medio %
         $currentColumn++;
-        /*$formula = "=IF($scontrinoMedioAC_XY<>0, ($scontrinoMedioAC_XY - $scontrinoMedioAP_XY)/$scontrinoMedioAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Pezzi A.C.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $quantityAC, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
-        $pezziAC_XY = XY( $currentColumn, $currentRow );
 
         // Pezzi A.P.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $quantityAP, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
-        $pezziAP_XY = XY( $currentColumn, $currentRow );
 
         // Delta Pezzi %
         $currentColumn++;
-        /*$formula = "=IF($pezziAC_XY<>0, ($pezziAC_XY - $pezziAP_XY)/$pezziAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Prezzo Medio A.C.
         $currentColumn++;
-        /*$formula = "=IF($pezziAC_XY<>0, $incassoAC_XY/$pezziAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $prezzoMedioAC_XY = XY( $currentColumn, $currentRow );*/
 
         // Prezzo Medio A.P.
         $currentColumn++;
-        /*$formula = "=IF($pezziAP_XY<>0, $incassoAP_XY/$pezziAP_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $prezzoMedioAP_XY = XY( $currentColumn, $currentRow );*/
 
         // Delta Prezzo Medio %
         $currentColumn++;
-        /*$formula = "=IF($prezzoMedioAC_XY<>0, ($prezzoMedioAC_XY - $prezzoMedioAP_XY)/$prezzoMedioAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Pezzi per cliente A.C.
         $currentColumn++;
-        /*$formula = "=IF($penetrazioneAC_XY<>0, $pezziAC_XY/$penetrazioneAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $pezziClienteAC_XY = XY( $currentColumn, $currentRow );*/
 
         // Pezzi per cliente A.P.
         $currentColumn++;
-        /*$formula = "=IF($penetrazioneAP_XY<>0, $pezziAP_XY/$penetrazioneAP_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $pezziClienteAP_XY = XY( $currentColumn, $currentRow );*/
 
         // Delta Pezzi per Cliente %
         $currentColumn++;
-        /*$formula = "=IF($pezziClienteAC_XY<>0, ($pezziClienteAC_XY - $pezziClienteAP_XY)/$pezziClienteAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Ore A.C.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $oreAC, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $oreAC_XY = XY( $currentColumn, $currentRow );
 
         // Ore A.P.
         $currentColumn++;
         $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $oreAP, DataType::TYPE_NUMERIC );
         $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $oreAP_XY = XY( $currentColumn, $currentRow );
 
         // Delta Ore %
         $currentColumn++;
-        /*$formula = "=IF($oreAC_XY<>0, ($oreAC_XY - $oreAP_XY)/$oreAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         // Procapite A.C.
         $currentColumn++;
-        /*$formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $procapiteAC_XY = XY( $currentColumn, $currentRow );*/
 
         // Procapite A.P.
         $currentColumn++;
-        /*$formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-        $procapiteAP_XY = XY( $currentColumn, $currentRow );*/
 
         // Delta Procapite %
         $currentColumn++;
-        /*$formula = "=IF($procapiteAC_XY<>0, ($procapiteAC_XY - $procapiteAP_XY)/$procapiteAC_XY,0)";
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );*/
 
         $sheet->getRowDimension( $currentRow )->setRowHeight( 32 );
 
