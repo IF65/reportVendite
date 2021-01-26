@@ -167,7 +167,7 @@ try {
     }
 
     // debug
-	$shopList = ['0101' => 'PIAVE', '0102' => 'MARCHETTI', '0103' => 'COLLEBEATO', '0104' => 'ROSA']; //$shopList
+	//$shopList = ['0101' => 'PIAVE', '0102' => 'MARCHETTI', '0103' => 'COLLEBEATO', '0104' => 'ROSA']; //$shopList
 
     // creazione workbook
     $originX = 1;
@@ -1201,17 +1201,23 @@ try {
 
 	// formattazioni colonne
 	// -------------------------------------------------------------------------------
+	$sheet->getColumnDimensionByColumn(1)->setWidth(20.0);
+	$sheet->getColumnDimensionByColumn(2)->setWidth(20.0);
+	$sheet->getColumnDimensionByColumn(3)->setWidth(30.0);
 	$sheet->getColumnDimensionByColumn(4)->setWidth(30.0);
+	$sheet->getColumnDimensionByColumn(6)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(7)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(9)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(12)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(15)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(18)->setVisible(False);
-	$sheet->getColumnDimensionByColumn(121)->setVisible(False);
+	$sheet->getColumnDimensionByColumn(21)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(24)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(27)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(30)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(33)->setVisible(False);
+
+	$sheet->freezePane('E17');
 
 	$sheet->setSelectedCell('A1');
 
@@ -1219,9 +1225,15 @@ try {
 	$sheet->getPageSetup()->setFitToHeight(0);
 	$sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
 	$sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+	$sheet->getPageSetup()->setPrintArea('D1:AH15');
+
+	//$sheet->getProtection()->setSheet(true);	// Needs to be set to true in order to enable any worksheet protection!
+	//$sheet->protectCells(RXY(1,15,34,$currentRow + 1), 'PHPExcel');
 
 	$sheet->getCell('K15')->getCalculatedValue();
 	$sheet->getCell('L15')->getCalculatedValue();
+
+	$sheet->setAutoFilter(RXY(1, 16, 3, $currentRow));
 
     $writer = new Xlsx( $workBook );
     $writer->save( '/Users/if65/Desktop/if65.xlsx' );
@@ -1411,7 +1423,8 @@ function writeDepartmentRows()
 
 	    // Clienti totali anno corrente (vengono ripetuti identici su ogni riga)
 	    $currentColumn++;
-	    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clientiTotaliSedeAC[$sedeSelezionata], DataType::TYPE_NUMERIC );
+	    $clienti = key_exists( $sedeSelezionata, $clientiTotaliSedeAC ) ? $clientiTotaliSedeAC[$sedeSelezionata] : 0;
+	    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clienti, DataType::TYPE_NUMERIC );
 	    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
 
 	    // Mix % Vendite A.C.
@@ -1430,7 +1443,8 @@ function writeDepartmentRows()
 
 	    // Clienti totali anno precedente (vengono ripetuti identici su ogni riga)
 	    $currentColumn++;
-	    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clientiTotaliSedeAP[$sedeSelezionata], DataType::TYPE_NUMERIC );
+	    $clienti = key_exists( $sedeSelezionata, $clientiTotaliSedeAP ) ? $clientiTotaliSedeAP[$sedeSelezionata] : 0;
+	    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clienti, DataType::TYPE_NUMERIC );
 	    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
 
 	    // Delta % Mix
