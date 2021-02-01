@@ -20,7 +20,6 @@ use GuzzleHttp\Client;
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-
 // date di inizio e fine settimana corrente (da parametrizzare su linea di comando)
 // -------------------------------------------------------------------------------
 $dataCorrenteAC = new DateTime('2021-01-24', $timeZone);
