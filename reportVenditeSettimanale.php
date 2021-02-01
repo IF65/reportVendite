@@ -23,18 +23,18 @@ $timeZone = new DateTimeZone('Europe/Rome');
 
 // date di inizio e fine settimana corrente (da parametrizzare su linea di comando)
 // -------------------------------------------------------------------------------
-$dataCorrenteAC = new DateTime('2021-01-17', $timeZone);
-$dataInizioAC = new DateTime('2021-01-11', $timeZone);
-$dataFineAC = new DateTime('2021-01-17', $timeZone);
-$dataCorrenteAP = new DateTime('2020-01-19', $timeZone);
-$dataInizioAP = new DateTime('2020-01-13', $timeZone);
-$dataFineAP = new DateTime('2020-01-19', $timeZone);
+$dataCorrenteAC = new DateTime('2021-01-24', $timeZone);
+$dataInizioAC = new DateTime('2021-01-18', $timeZone);
+$dataFineAC = new DateTime('2021-01-24', $timeZone);
+$dataCorrenteAP = new DateTime('2020-01-26', $timeZone);
+$dataInizioAP = new DateTime('2020-01-20', $timeZone);
+$dataFineAP = new DateTime('2020-01-26', $timeZone);
 
-$messaggio = "Settimana 2";
+$messaggio = "Settimana 3";
 
 // parametri per l'accesso all'host
 // -------------------------------------------------------------------------------
-$hostname = 'localhost';
+$hostname = '10.11.14.177';
 $user = 'root';
 $password = 'mela';
 
@@ -57,7 +57,7 @@ try {
                     from archivi.negozi as n 
                     where n.`data_inizio` <= :dataInizio and (n.`data_fine`>=:dataFine or n.`data_fine`is null) and 
                           n.`societa` in ('02','05') and n.`codice` not like '00%' 
-                    order by 1;";
+                    order by 1 limit 5;";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute([':dataInizio' => $dataInizioAC->format('Y-m-d'), ':dataFine' => $dataFineAC->format('Y-m-d')]);
 	    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
@@ -101,7 +101,7 @@ try {
 	    // -------------------------------------------------------------------------------
 	    $stmt = "   select distinct  `subtotali`,`nuovoReparto`
                     from mtx.sottoreparto 
-                    order by 1";
+                    order by sortOrderSubTotale";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute();
 	    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
@@ -299,7 +299,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-				$cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+				$cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -311,7 +311,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -349,7 +349,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -361,7 +361,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -419,7 +419,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -430,7 +430,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -487,7 +487,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -498,7 +498,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, 15 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -1198,7 +1198,7 @@ try {
 	$sheet->getStyle(RXY($originX + 25, $originY + 1, $originX + 27, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
 	$sheet->getStyle(RXY($originX + 28, $originY + 1, $originX + 30, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
 	$sheet->getStyle(RXY($originX + 31, $originY + 1, $originX + 33, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-
+	$sheet->getStyle(RXY($originX + 3, $originY + $subtotalCount + $departmentCount + 2, $originX + 33, $originY + $subtotalCount + $departmentCount + 2))->applyFromArray($styleBorderArray);
 
 	// formattazioni colonne
 	// -------------------------------------------------------------------------------
@@ -1218,7 +1218,7 @@ try {
 	$sheet->getColumnDimensionByColumn(30)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(33)->setVisible(False);
 
-	$sheet->freezePane(XY($originX + 4, $originY + 16));
+	$sheet->freezePane(XY($originX + 4, $originY +  $subtotalCount + $departmentCount + 3));
 
 	$sheet->setSelectedCell('A1');
 
@@ -1226,7 +1226,7 @@ try {
 	$sheet->getPageSetup()->setFitToHeight(0);
 	$sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
 	$sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
-	$sheet->getPageSetup()->setPrintArea(RXY(4, $originY, 34, $originY + 14));
+	$sheet->getPageSetup()->setPrintArea(RXY(4, $originY, 34, $originY + $subtotalCount + $departmentCount + 2));
 	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
 	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
 	$sheet->getHeaderFooter()->setOddFooter('&L &D &T &R Pagina &P di &N');
@@ -1238,7 +1238,7 @@ try {
 	$sheet->getCell('K15')->getCalculatedValue();
 	$sheet->getCell('L15')->getCalculatedValue();
 
-	$sheet->setAutoFilter(RXY(1, $originY + 15, 3, $currentRow));
+	$sheet->setAutoFilter(RXY(1, $originY + $subtotalCount + $departmentCount + 2, 3, $currentRow));
 
     $writer = new Xlsx( $workBook );
     $writer->save( '/Users/if65/Desktop/if65.xlsx' );
