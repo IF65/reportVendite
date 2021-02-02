@@ -22,14 +22,14 @@ $timeZone = new DateTimeZone('Europe/Rome');
 
 // date di inizio e fine settimana corrente (da parametrizzare su linea di comando)
 // -------------------------------------------------------------------------------
-$dataCorrenteAC = new DateTime('2021-01-24', $timeZone);
-$dataInizioAC = new DateTime('2021-01-18', $timeZone);
-$dataFineAC = new DateTime('2021-01-24', $timeZone);
-$dataCorrenteAP = new DateTime('2020-01-26', $timeZone);
-$dataInizioAP = new DateTime('2020-01-20', $timeZone);
-$dataFineAP = new DateTime('2020-01-26', $timeZone);
+$dataCorrenteAC = new DateTime('2021-01-31', $timeZone);
+$dataInizioAC = new DateTime('2021-01-25', $timeZone);
+$dataFineAC = new DateTime('2021-01-31', $timeZone);
+$dataCorrenteAP = new DateTime('2020-01-31', $timeZone);
+$dataInizioAP = new DateTime('2020-01-26', $timeZone);
+$dataFineAP = new DateTime('2020-01-31', $timeZone);
 
-$messaggio = "Settimana 3";
+$messaggio = "Settimana 4";
 
 // parametri per l'accesso all'host
 // -------------------------------------------------------------------------------
@@ -54,9 +54,9 @@ try {
 	    // -------------------------------------------------------------------------------
 	    $stmt = "   select n.codice code, n.negozio_descrizione description, n.area, n.tipoFood type 
                     from archivi.negozi as n 
-                    where n.`data_inizio` <= :dataInizio and (n.`data_fine`>=:dataFine or n.`data_fine`is null) and 
+                    where n.`data_inizio` <= :dataFine and (n.`data_fine` >= :dataInizio or n.`data_fine`is null) and 
                           n.`societa` in ('02','05') and n.`codice` not like '00%' 
-                    order by 1 limit 5;";
+                    order by 1;";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute([':dataInizio' => $dataInizioAC->format('Y-m-d'), ':dataFine' => $dataFineAC->format('Y-m-d')]);
 	    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
@@ -116,10 +116,14 @@ try {
 
 	    // recupero clienti giorno/negozio
 	    // -------------------------------------------------------------------------------
-	    $stmt = "	select store, ifnull(sum(itemCount),0) itemCount 
+	    /*$stmt = "	select store, ifnull(sum(itemCount),0) itemCount
 					from mtx.eod 
 					where ddate >= :ddateStart and ddate <= :ddateEnd 
-					group by 1";
+					group by 1";*/
+
+	    $stmt = "	select store, ifnull(count(distinct reg, trans),0) itemCount  
+					from mtx.sales 
+					where  ddate >= :ddateStart and ddate <= :ddateEnd group by 1";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute([
 	    	':ddateStart' => $dataInizioAC->format('Y-m-d'),
@@ -298,7 +302,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-				$cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+				$cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -310,7 +314,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -348,7 +352,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -360,7 +364,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -418,7 +422,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -429,7 +433,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -486,7 +490,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -497,7 +501,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -844,7 +848,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn - 4, 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn - 4, 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -855,7 +859,7 @@ try {
 		    $currentColumn++;
 		    $cellList = [];
 		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn - 3, 2 + $currentRow + ($i * 10)) ;
+			    $cellList[] = XY($currentColumn - 3, 2 + $currentRow + ($i * $departmentCount)) ;
 		    }
 		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
@@ -1259,7 +1263,7 @@ function riclassificazioneDati(DateTime $dataInizioPeriodoAC, DateTime $dataFine
     $periodoRiclassificatoAC = [];
     foreach ($periodoAC as $giorno) {
         $data = new DateTime($giorno['ddate']);
-        if ($data <= $dataFinePeriodo and $data >= $dataInizioPeriodo) {
+        if ($data->format("Y-m-d") <= $dataFinePeriodo->format("Y-m-d") and $data->format("Y-m-d") >= $dataInizioPeriodo->format("Y-m-d")) {
             if (key_exists($giorno['department'], $periodoRiclassificatoAC)) {
                 $rowcount = $periodoRiclassificatoAC[$giorno['department']]['rowcount'] + $giorno['rowcount'];
                 $periodoRiclassificatoAC[$giorno['department']]['rowcount'] = $rowcount;
