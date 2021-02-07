@@ -6,8 +6,8 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2021-01-01', $timeZone);
-$dataFine = new DateTime('2021-01-18', $timeZone);
+$dataInizio = new DateTime('2021-02-06', $timeZone);
+$dataFine = new DateTime('2021-02-06', $timeZone);
 
 // identificazione server
 // -------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ try {
     $sourceDb = new PDO( "mysql:host=$sourceHostname", $sourceUser, $sourcePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION] );
     $destinationDb = new PDO( "mysql:host=$destinationHostname", $destinationUser, $destinationPassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION] );
 
-    // creo (se non c'è) la tabella sales sul db destinazione
+    // creo la tabella sales sul db destinazione
     // -------------------------------------------------------------------------------
     $stmt = "   CREATE TABLE IF NOT EXISTS mtx.sales (
                       `store` varchar(4) NOT NULL DEFAULT '',
@@ -50,9 +50,22 @@ try {
                       KEY `weight` (`weight`),
                       KEY `fidelityCard` (`fidelityCard`)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-
     $h_query = $destinationDb->prepare( $stmt );
     $h_query->execute();
+
+	// creo la tabella salesPerDepartment sul db destinazione
+    // -------------------------------------------------------------------------------
+	$stmt = "   CREATE TABLE IF NOT EXISTS mtx.`salesPerDepartment` (
+				  `store` varchar(4) NOT NULL DEFAULT '',
+				  `ddate` date NOT NULL,
+				  `department` varchar(100) NOT NULL DEFAULT '',
+				  `totaltaxableamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+				  `rowCount` int(11) NOT NULL DEFAULT '0',
+				  `customerCount` int(11) NOT NULL DEFAULT '0',
+				  PRIMARY KEY (`store`,`ddate`,`department`)
+				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+	$h_query = $destinationDb->prepare( $stmt );
+	$h_query->execute();
 
     // carico la corrispondenza barcode => [codice articolo, reparto]
     // -------------------------------------------------------------------------------
@@ -68,7 +81,7 @@ try {
     }
     unset($result);
 
-    // preparo le  query di inserimento/caricamento
+    // preparo le query di inserimento/caricamento
     // -------------------------------------------------------------------------------
     $stmt = "   insert ignore into mtx.sales 
                     (store, ddate, reg, trans, department, barcode, articledepartment, articlecode, weight, rowCount, quantity, totalamount, totaltaxableamount, fidelityCard) 
@@ -79,73 +92,108 @@ try {
     $stmt = "   select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 
                            0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, 
                            sum(totaltaxableamount) totaltaxableamount, '' fidelityCard 
-                    from mtx.idc 
-                    where ddate = :data and binary recordtype = 'S' and recordcode1 = 1
-                    group by 1,2,3,4,5,6
-                    having totalamount <> 0";
+                from mtx.idc 
+                where ddate = :data and binary recordtype = 'S' and recordcode1 = 1
+                group by 1,2,3,4,5,6
+                having totalamount <> 0";
     $h_load_query = $sourceDb->prepare( $stmt );
+
+    // preparo la query di controllo esistenza dati (serve a evitare doppi caricamenti)
+	// -------------------------------------------------------------------------------
+	$stmt = "select ifnull(count(*),0) `recordCount` from mtx.sales where ddate = :ddate";
+	$h_count_sales_query = $destinationDb->prepare( $stmt );
+
+	// preparo la query di creazione salesPerDepartment (record vuoti)
+	// -------------------------------------------------------------------------------
+	$stmt = "	insert ignore into mtx.salesPerDepartment
+				select a.store, :ddate ddate, b.department, 0 totaltaxableamount, 0 rowCount, 0 customerCount from 
+					(select codice store from archivi.negozi where societa in ('02','05') and codice not like '00%' and data_inizio <= :ddate and (data_fine >= :ddate or data_fine is null)) as a join
+					(select distinct nuovoReparto department from mtx.sottoreparto order by 1) as b;";
+	$h_create_salesPerDepartment = $destinationDb->prepare( $stmt );
+
+	// preparo la query di creazione salesPerDepartment
+	// -------------------------------------------------------------------------------
+	$stmt = "delete from mtx.salesPerDepartment where ddate = :ddate";
+	$h_delete_salesPerDepartment = $destinationDb->prepare( $stmt );
+
+	// preparo la query di insert salesPerDepartment
+	// -------------------------------------------------------------------------------
+		$stmt = "	insert into mtx.salesPerDepartment
+					select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, count(distinct s.reg, s.trans) transCount 
+					from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+					where s.ddate = :ddate 
+					group by 1,2,3";
+	$h_insert_salesPerDepartment = $destinationDb->prepare( $stmt );
 
     // eseguo il caricamento dei dati
     // -------------------------------------------------------------------------------
     $data = clone $dataInizio;
     while ($data <= $dataFine) {
-        $inizioCaricamento = (new DateTime())->setTimezone($timeZone);
-        echo "Inizio caricamento giornata del " . $data->format( 'Y-m-d' ) . ' : ' . $inizioCaricamento->format( 'H:m:s' ) .  "\n";
+	    $inizioCaricamento = (new DateTime())->setTimezone($timeZone);
+	    echo "Inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:m:s') . "\n";
 
-        $h_load_query->execute( ['data' => $data->format( 'Y-m-d' )] );
-        $sales = $h_load_query->fetchAll( PDO::FETCH_ASSOC );
+	    $h_count_sales_query->execute([':ddate' => $data->format('Y-m-d')]);
+	    $value = $h_count_sales_query->fetch(PDO::FETCH_ASSOC);
+	    $salesRecordCount = $value['recordCount'] * 1;
 
-        foreach ($sales as $sale) {
-            $quantity = $sale['quantity'];
-            $weight = $sale['weight'];
-            $barcode = $sale['barcode'];
-            if (preg_match( '/^(2\d{6})00000.$/', $barcode, $matches )) {
-                $barcode = $matches[1];
-                $weight = $quantity;
-                $quantity = $sale['rowCount'];
-            }
+	    if (!$salesRecordCount) {
+		    $h_load_query->execute(['data' => $data->format('Y-m-d')]);
+		    $sales = $h_load_query->fetchAll(PDO::FETCH_ASSOC);
 
-            $articleCode = (key_exists( $barcode, $articoli )) ? $articoli[$barcode]['codice'] : '';
-            $articledepartment = (key_exists( $barcode, $articoli )) ? $articoli[$barcode]['reparto'] : '';
-            if ($articledepartment == '') {
-                if ($sale['department'] > 9 && $sale['department'] < 100) {
-                    $articledepartment = '0001';
-                } elseif ($sale['department'] < 10) {
-                    $articledepartment = str_pad( $sale['department'] * 100, 4, "0", STR_PAD_LEFT );
-                } else {
-                    $articledepartment = str_pad( $sale['department'], 4, "0", STR_PAD_LEFT );
-                }
-            }
-            $totaltaxableamount = $sale['totaltaxableamount'];
-            if ($quantity < 0 && $totaltaxableamount > 0) {
-                $totaltaxableamount = $totaltaxableamount * -1;
-            }
+		    foreach ($sales as $sale) {
+			    $quantity = $sale['quantity'];
+			    $weight = $sale['weight'];
+			    $barcode = $sale['barcode'];
+			    if (preg_match('/^(2\d{6})00000.$/', $barcode, $matches)) {
+				    $barcode = $matches[1];
+				    $weight = $quantity;
+				    $quantity = $sale['rowCount'];
+			    }
 
-            $h_insert_query->execute( [
-                'store' => $sale['store'],
-                'ddate' => $sale['ddate'],
-                'reg' => $sale['reg'],
-                'trans' => $sale['trans'],
-                'department' => $sale['department'],
-                'barcode' => $barcode,
-                'articledepartment' => $articledepartment,
-                'articlecode' => $articleCode,
-                'weight' => $weight,
-                'rowCount' => $sale['rowCount'],
-                'quantity' => $quantity,
-                'totalamount' => $sale['totalamount'],
-                'totaltaxableamount' => $totaltaxableamount,
-                'fidelityCard' => $sale['fidelityCard']
-            ] );
-        }
+			    $articleCode = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['codice'] : '';
+			    $articledepartment = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['reparto'] : '';
+			    if ($articledepartment == '') {
+				    if ($sale['department'] > 9 && $sale['department'] < 100) {
+					    $articledepartment = '0001';
+				    } elseif ($sale['department'] < 10) {
+					    $articledepartment = str_pad($sale['department'] * 100, 4, "0", STR_PAD_LEFT);
+				    } else {
+					    $articledepartment = str_pad($sale['department'], 4, "0", STR_PAD_LEFT);
+				    }
+			    }
+			    $totaltaxableamount = $sale['totaltaxableamount'];
+			    if ($quantity < 0 && $totaltaxableamount > 0) {
+				    $totaltaxableamount = $totaltaxableamount * -1;
+			    }
 
-        $fineCaricamento = (new DateTime())->setTimezone($timeZone);
-        echo "Fine caricamento giornata del " . $data->format( 'Y-m-d' ) . ' : ' . $fineCaricamento->format( 'H:m:s' ) .  "\n";
+			    $h_insert_query->execute([
+				    'store' => $sale['store'],
+				    'ddate' => $sale['ddate'],
+				    'reg' => $sale['reg'],
+				    'trans' => $sale['trans'],
+				    'department' => $sale['department'],
+				    'barcode' => $barcode,
+				    'articledepartment' => $articledepartment,
+				    'articlecode' => $articleCode,
+				    'weight' => $weight,
+				    'rowCount' => $sale['rowCount'],
+				    'quantity' => $quantity,
+				    'totalamount' => $sale['totalamount'],
+				    'totaltaxableamount' => $totaltaxableamount,
+				    'fidelityCard' => $sale['fidelityCard']
+			    ]);
+		    }
+	    }
 
-        $interval = $inizioCaricamento->diff($fineCaricamento);
-        echo "Tempo impiegato : " . $interval->format('%i min') ."\n\n";
+	    // creo e poi calcolo i consolidati per macro reparto
+	    $h_delete_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_insert_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_create_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]); // <- creo i reparti che non si sono movimentati nella giornata
 
-        $data->add(new DateInterval('P1D'));
+	    $fineCaricamento = (new DateTime())->setTimezone($timeZone);
+	    echo "Fine caricamento giornata del " . $data->format('Y-m-d') . "\n";
+
+	    $data->add(new DateInterval('P1D'));
     }
 } catch (PDOException $e) {
     echo "Errore: " . $e->getMessage();
