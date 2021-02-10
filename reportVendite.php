@@ -16,12 +16,12 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Calculation;
-use GuzzleHttp\Client;
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
 // date di inizio e fine settimana corrente (da parametrizzare su linea di comando)
 // -------------------------------------------------------------------------------
+$messaggio = "Settimana 4";
 $dataCorrenteAC = new DateTime('2021-01-31', $timeZone);
 $dataInizioAC = new DateTime('2021-01-25', $timeZone);
 $dataFineAC = new DateTime('2021-01-31', $timeZone);
@@ -29,7 +29,39 @@ $dataCorrenteAP = new DateTime('2020-02-02', $timeZone);
 $dataInizioAP = new DateTime('2020-01-27', $timeZone);
 $dataFineAP = new DateTime('2020-02-02', $timeZone);
 
-$messaggio = "Settimana 4";
+/*
+$messaggio = "Settimana 5";
+$dataCorrenteAC = new DateTime('2021-02-07', $timeZone);
+$dataInizioAC = new DateTime('2021-02-01', $timeZone);
+$dataFineAC = new DateTime('2021-02-07', $timeZone);
+$dataCorrenteAP = new DateTime('2020-02-09', $timeZone);
+$dataInizioAP = new DateTime('2020-02-03', $timeZone);
+$dataFineAP = new DateTime('2020-02-09', $timeZone);
+
+$messaggio = "Gennaio";
+$dataCorrenteAC = new DateTime('2021-01-31', $timeZone);
+$dataInizioAC = new DateTime('2021-01-01', $timeZone);
+$dataFineAC = new DateTime('2021-01-31', $timeZone);
+$dataCorrenteAP = new DateTime('2020-01-31', $timeZone);
+$dataInizioAP = new DateTime('2020-01-01', $timeZone);
+$dataFineAP = new DateTime('2020-01-31', $timeZone);
+
+$messaggio = "7 Febbraio 2021";
+$dataCorrenteAC = new DateTime('2021-02-07', $timeZone);
+$dataInizioAC = new DateTime('2021-02-07', $timeZone);
+$dataFineAC = new DateTime('2021-02-07', $timeZone);
+$dataCorrenteAP = new DateTime('2020-02-09', $timeZone);
+$dataInizioAP = new DateTime('2020-02-09', $timeZone);
+$dataFineAP = new DateTime('2020-02-09', $timeZone);
+
+$messaggio = "Progress al 7 Febbraio 2021";
+$dataCorrenteAC = new DateTime('2021-02-07', $timeZone);
+$dataInizioAC = new DateTime('2021-01-01', $timeZone);
+$dataFineAC = new DateTime('2021-02-07', $timeZone);
+$dataCorrenteAP = new DateTime('2020-02-07', $timeZone);
+$dataInizioAP = new DateTime('2020-01-01', $timeZone);
+$dataFineAP = new DateTime('2020-02-07', $timeZone);
+*/
 
 // parametri per l'accesso all'host
 // -------------------------------------------------------------------------------
@@ -39,10 +71,8 @@ $password = 'mela';
 
 
 // costanti
-// -------
-
+// -------------------------------------------------------------------------------
 $repartoIndefinito = 'NON DEFINITO';
-
 $plusOneDay = new DateInterval('P1D');
 
 try {
@@ -56,7 +86,7 @@ try {
                     from archivi.negozi as n 
                     where n.`data_inizio` <= :dataFine and (n.`data_fine` >= :dataInizio or n.`data_fine`is null) and 
                           n.`societa` in ('02','05') and n.`codice` not like '00%' 
-                    order by 1 limit 1;";
+                    order by 1;";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute([':dataInizio' => $dataInizioAC->format('Y-m-d'), ':dataFine' => $dataFineAC->format('Y-m-d')]);
 	    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
@@ -114,16 +144,28 @@ try {
 	    }
 	    $subtotalCount = sizeof($subtotalDescription);
 
+	    // recupero clienti per subtotali giorno/negozio
+	    // -------------------------------------------------------------------------------
+	    /*$stmt = "   select s.store, r.`subtotali` subtotal, count(distinct s.reg, s.trans) transCount
+					from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+					where ddate >= :ddateStart and ddate <= :ddateEnd
+					group by 1,2;";
+	    $h_query = $db->prepare($stmt);
+	    $h_query->execute([
+		    ':ddateStart' => $dataInizioAC->format('Y-m-d'),
+		    ':ddateEnd' => $dataFineAC->format('Y-m-d')
+	    ]);
+	    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
+	    $clientiSubtotaliSedeAC = [];
+	    foreach ($result as $count) {
+		    $clientiSubtotaliSedeAC[$count['store']] = $count['itemCount'] * 1;
+	    }*/
+
 	    // recupero clienti giorno/negozio
 	    // -------------------------------------------------------------------------------
-	    /*$stmt = "	select store, ifnull(sum(itemCount),0) itemCount
-					from mtx.eod 
-					where ddate >= :ddateStart and ddate <= :ddateEnd 
-					group by 1";*/
-
 	    $stmt = "	select store, ifnull(count(distinct reg, trans),0) itemCount  
 					from mtx.sales 
-					where  ddate >= :ddateStart and ddate <= :ddateEnd group by 1";
+					where ddate >= :ddateStart and ddate <= :ddateEnd group by 1";
 	    $h_query = $db->prepare($stmt);
 	    $h_query->execute([
 	    	':ddateStart' => $dataInizioAC->format('Y-m-d'),
@@ -143,32 +185,6 @@ try {
 	    foreach ($result as $count) {
 		    $clientiTotaliSedeAP[$count['store']] = $count['itemCount'] * 1;
 	    }
-
-	    // recupero ore lavorate per reparto
-	    // -------------------------------------------------------------------------------
-	    $client = new Client([
-		    'base_uri' => 'http://10.11.14.74/',
-		    'headers' => ['Content-Type' => 'application/json'],
-		    'timeout' => 200,
-	    ]);
-
-	    $response = $client->post('/eDatacollect',
-		    ['json' =>
-			    [
-				    'dataInizioAC' => $dataInizioAC->format('Y-m-d'),
-				    'dataFineAC' => $dataFineAC->format('Y-m-d'),
-				    'dataInizioAP' => $dataInizioAP->format('Y-m-d'),
-				    'dataFineAP' => $dataFineAP->format('Y-m-d'),
-				    'function' => 'recuperaOreReparto'
-			    ]
-		    ]
-	    );
-
-	    $hourDepartment = [];
-	    if ($response->getStatusCode() == 200) {
-		    $hourDepartment = json_decode($response->getBody()->getContents(), true);
-	    }
-
     }
 
     // creazione workbook
@@ -262,12 +278,6 @@ try {
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Pezzi per Cliente A.C.', DataType::TYPE_STRING);
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Pezzi per Cliente A.P.', DataType::TYPE_STRING);
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Pezzi per Cliente %', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Ore A.C.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Ore A.P.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Ore %', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Procapite A.C.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Procapite A.P.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Procapite %', DataType::TYPE_STRING);
 
 		    $sheet->getStyle( RXY($originX, $originY, $currentColumn, $originY) )->applyFromArray( $styleTitles );
 		    $sheet->getStyle( RXY($originX, $originY, $currentColumn, $originY))->applyFromArray( $styleBorderArray );
@@ -486,54 +496,6 @@ try {
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
 		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
 
-		    // Ore A.C.
-		    $currentColumn++;
-		    $cellList = [];
-		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
-		    }
-		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $oreAC_XY = XY( $currentColumn, $currentRow );
-
-		    // Ore A.P.
-		    $currentColumn++;
-		    $cellList = [];
-		    for($i=0;$i<count($shopList);$i++) {
-			    $cellList[] = XY($currentColumn, $subtotalCount + $departmentCount + 2 + $currentRow + ($i * $departmentCount)) ;
-		    }
-		    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $oreAP_XY = XY( $currentColumn, $currentRow );
-
-		    // Delta Ore %
-		    $currentColumn++;
-		    $formula = "=IF($oreAC_XY<>0, ($oreAC_XY - $oreAP_XY)/$oreAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-
-		    // Procapite A.C.
-		    $currentColumn++;
-		    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $procapiteAC_XY = XY( $currentColumn, $currentRow );
-
-		    // Procapite A.P.
-		    $currentColumn++;
-		    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $procapiteAP_XY = XY( $currentColumn, $currentRow );
-
-		    // Delta Procapite %
-		    $currentColumn++;
-		    $formula = "=IF($procapiteAC_XY<>0, ($procapiteAC_XY - $procapiteAP_XY)/$procapiteAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-
 		    $sheet->getRowDimension( $currentRow )->setRowHeight( 32 );
 
 		    $currentRow++;
@@ -612,11 +574,12 @@ try {
 
 			    // Clienti A.C.
 			    $currentColumn++;
-			    $formula = "=SUM(";
-			    foreach ($subtotalRows[$description] as $row) {
-				    $formula .= (XY($currentColumn, $row) . ',');
+			    $cellList = [];
+			    for($i=0;$i<count($shopList);$i++) {
+				    $cellList[] = XY($currentColumn + 15, $subtotalCount + 2 + $currentRow + ($i * $departmentCount)) ;
 			    }
-			    $formula = preg_replace('/.$/', ')', $formula);
+			    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
+			    echo "$formula\n";
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
 			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
 			    $penetrazioneAC_XY = XY($currentColumn, $currentRow);
@@ -624,11 +587,11 @@ try {
 
 			    // Clienti A.P.
 			    $currentColumn++;
-			    $formula = "=SUM(";
-			    foreach ($subtotalRows[$description] as $row) {
-				    $formula .= (XY($currentColumn, $row) . ',');
+			    $cellList = [];
+			    for($i=0;$i<count($shopList);$i++) {
+				    $cellList[] = XY($currentColumn + 15, $subtotalCount + 2 + $currentRow + ($i * $departmentCount)) ;
 			    }
-			    $formula = preg_replace('/.$/', ')', $formula);
+			    $formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
 			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
 			    $penetrazioneAP_XY = XY($currentColumn, $currentRow);
@@ -748,54 +711,6 @@ try {
 			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
 			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($percentageFormat);
 
-			    // Ore A.C.
-			    $currentColumn++;
-			    $formula = "=SUM(";
-			    foreach ($subtotalRows[$description] as $row) {
-				    $formula .= (XY($currentColumn, $row) . ',');
-			    }
-			    $formula = preg_replace('/.$/', ')', $formula);
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
-			    $oreAC_XY = XY($currentColumn, $currentRow);
-
-			    // Ore A.P.
-			    $currentColumn++;
-			    $formula = "=SUM(";
-			    foreach ($subtotalRows[$description] as $row) {
-				    $formula .= (XY($currentColumn, $row) . ',');
-			    }
-			    $formula = preg_replace('/.$/', ')', $formula);
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
-			    $oreAP_XY = XY($currentColumn, $currentRow);
-
-			    // Delta Ore %
-			    $currentColumn++;
-			    $formula = "=IF($oreAC_XY<>0, ($oreAC_XY - $oreAP_XY)/$oreAC_XY,0)";
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($percentageFormat);
-
-			    // Procapite A.C.
-			    $currentColumn++;
-			    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
-			    $procapiteAC_XY = XY($currentColumn, $currentRow);
-
-			    // Procapite A.P.
-			    $currentColumn++;
-			    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($currencyFormat);
-			    $procapiteAP_XY = XY($currentColumn, $currentRow);
-
-			    // Delta Procapite %
-			    $currentColumn++;
-			    $formula = "=IF($procapiteAC_XY<>0, ($procapiteAC_XY - $procapiteAP_XY)/$procapiteAC_XY,0)";
-			    $sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
-			    $sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($percentageFormat);
-
 			    $sheet->getRowDimension($currentRow)->setRowHeight(32);
 
 			    //$sheet->mergeCells(RXY($originX, $currentRow, $originX + 2, $currentRow));
@@ -807,9 +722,6 @@ try {
 
 	    // riga totali
 	    if(true) {
-		    //$clientiAC = $periodoRiclassificatoAC[array_keys($periodoRiclassificatoAC)[0]]['transazioni'];
-		    //$clientiAP = $periodoRiclassificatoAP[array_keys($periodoRiclassificatoAP)[0]]['transazioni'];
-
 		    $currentColumn = $originX + 3;
 
 		    // Reparto
@@ -961,46 +873,6 @@ try {
 		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
 		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
 
-		    // Ore A.C.
-		    $currentColumn++;
-		    $formula = "=SUM(" . RXY( $currentColumn, $currentRow - $departmentCount - $subtotalCount, $currentColumn, $currentRow - 1 - $subtotalCount ) . ")";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $oreAC_XY = XY( $currentColumn, $currentRow );
-
-		    // Ore A.P.
-		    $currentColumn++;
-		    $formula = "=SUM(" . RXY( $currentColumn, $currentRow - $departmentCount - $subtotalCount, $currentColumn, $currentRow - 1 - $subtotalCount ) . ")";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $oreAP_XY = XY( $currentColumn, $currentRow );
-
-		    // Delta Ore %
-		    $currentColumn++;
-		    $formula = "=IF($oreAC_XY<>0, ($oreAC_XY - $oreAP_XY)/$oreAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-
-		    // Procapite A.C.
-		    $currentColumn++;
-		    $formula = "=IF($oreAC_XY<>0, $incassoAC_XY/$oreAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $procapiteAC_XY = XY( $currentColumn, $currentRow );
-
-		    // Procapite A.P.
-		    $currentColumn++;
-		    $formula = "=IF($oreAP_XY<>0, $incassoAP_XY/$oreAP_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-		    $procapiteAP_XY = XY( $currentColumn, $currentRow );
-
-		    // Delta Procapite %
-		    $currentColumn++;
-		    $formula = "=IF($procapiteAC_XY<>0, ($procapiteAC_XY - $procapiteAP_XY)/$procapiteAC_XY,0)";
-		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA );
-		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $percentageFormat );
-
 		    $sheet->getRowDimension($currentRow)->setRowHeight(32);
 		    $sheet->getStyle(RXY($originX, $currentRow, $currentColumn, $currentRow))->applyFromArray(['font' => ['bold' => true]]);
 	    }
@@ -1042,12 +914,6 @@ try {
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Pezzi per Cliente A.C.', DataType::TYPE_STRING);
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Pezzi per Cliente A.P.', DataType::TYPE_STRING);
 		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Pezzi per Cliente %', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Ore A.C.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Ore A.P.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Ore %', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Procapite A.C.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Procapite A.P.', DataType::TYPE_STRING);
-		    $sheet->setCellValueExplicitByColumnAndRow(++$currentColumn, $currentRow, 'Delta Procapite %', DataType::TYPE_STRING);
 
 		    $sheet->getStyle( RXY($originX, $currentRow, $currentColumn, $currentRow) )->applyFromArray( $styleTitles );
 		    $sheet->getStyle( RXY($originX, $currentRow, $currentColumn, $currentRow))->applyFromArray( $styleBorderArray );
@@ -1091,6 +957,35 @@ try {
 			    }
 		    }
 
+		    // recupero clienti per subtotali giorno/negozio
+		    // -------------------------------------------------------------------------------
+		    $stmt = "   select r.`subtotali` subtotal, count(distinct s.reg, s.trans) transCount 
+						from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+						where ddate >= :ddateStart and ddate <= :ddateEnd and store = :store
+						group by 1;";
+		    $h_query = $db->prepare($stmt);
+		    $h_query->execute([
+			    ':ddateStart' => $dataInizioAC->format('Y-m-d'),
+			    ':ddateEnd' => $dataFineAC->format('Y-m-d'),
+			    ':store' => $sedeSelezionata
+		    ]);
+		    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
+		    $clientiSubtotaliAC = [];
+		    foreach ($result as $subtotale) {
+			    $clientiSubtotaliAC[$subtotale['subtotal']] = $subtotale['transCount'] * 1;
+		    }
+
+		    $h_query->execute([
+			    ':ddateStart' => $dataInizioAP->format('Y-m-d'),
+			    ':ddateEnd' => $dataFineAP->format('Y-m-d'),
+			    ':store' => $sedeSelezionata
+		    ]);
+		    $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
+		    $clientiSubtotaliAP = [];
+		    foreach ($result as $subtotale) {
+			    $clientiSubtotaliAP[$subtotale['subtotal']] = $subtotale['transCount'] * 1;
+		    }
+
 		    // recupero penetrazione dell'anno in corso e del precedente per reparto
 		    // -------------------------------------------------------------------------------
 		    $stmt = "   select s.store, s.ddate, r.nuovoReparto, concat(s.store, s.ddate, r.nuovoReparto) `index`,count(distinct reg, trans) transCount 
@@ -1125,9 +1020,11 @@ try {
 
 		    $h_query = $db->prepare($stmt);
 
+		    $penetrazioneSubtotaleAC = [];
 		    $h_query->execute([':dataInizio' => $dataInizioAC->format('Y-m-d'), ':dataFine' => $dataFineAC->format('Y-m-d'), ':sede' => $sedeSelezionata]);
 		    $penetrazioneSubtotaleAC = $h_query->fetchAll(PDO::FETCH_ASSOC);
 
+		    $penetrazioneSubtotaleAP = [];
 		    $h_query->execute([':dataInizio' => $dataInizioAP->format('Y-m-d'), ':dataFine' => $dataFineAP->format('Y-m-d'), ':sede' => $sedeSelezionata]);
 		    $penetrazioneSubtotaleAP = $h_query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1156,7 +1053,6 @@ try {
 
 			    $giorno['transazioni'] = (key_exists($index, $transazioniAC)) ? $transazioniAC[$index] : 0;
 			    $giorno['penetrazione'] = (key_exists($index, $penetrazioneAC)) ? $penetrazioneAC[$index] : 0;
-			    $giorno['ore'] = (key_exists($index, $hourDepartment)) ? $hourDepartment[$index] : 0;
 
 			    $tempPeriodoAC[$index] = $giorno;
 		    }
@@ -1167,7 +1063,6 @@ try {
 
 			    $giorno['transazioni'] = (key_exists($index, $transazioniAP)) ? $transazioniAP[$index] : 0;
 			    $giorno['penetrazione'] = (key_exists($index, $penetrazioneAP)) ? $penetrazioneAP[$index] : 0;
-			    $giorno['ore'] = (key_exists($index, $hourDepartment)) ? $hourDepartment[$index] : 0;
 
 			    $tempPeriodoAP[$index] = $giorno;
 		    }
@@ -1199,9 +1094,7 @@ try {
 	$sheet->getStyle(RXY($originX + 19, $originY + 1, $originX + 21, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
 	$sheet->getStyle(RXY($originX + 22, $originY + 1, $originX + 24, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
 	$sheet->getStyle(RXY($originX + 25, $originY + 1, $originX + 27, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-	$sheet->getStyle(RXY($originX + 28, $originY + 1, $originX + 30, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-	$sheet->getStyle(RXY($originX + 31, $originY + 1, $originX + 33, $originY + $subtotalCount + $departmentCount + 1))->applyFromArray($styleBorderArray);
-	$sheet->getStyle(RXY($originX + 3, $originY + $subtotalCount + $departmentCount + 2, $originX + 33, $originY + $subtotalCount + $departmentCount + 2))->applyFromArray($styleBorderArray);
+	$sheet->getStyle(RXY($originX + 3, $originY + $subtotalCount + $departmentCount + 2, $originX + 27, $originY + $subtotalCount + $departmentCount + 2))->applyFromArray($styleBorderArray);
 
 	// formattazioni colonne
 	// -------------------------------------------------------------------------------
@@ -1218,8 +1111,6 @@ try {
 	$sheet->getColumnDimensionByColumn(21)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(24)->setVisible(False);
 	$sheet->getColumnDimensionByColumn(27)->setVisible(False);
-	$sheet->getColumnDimensionByColumn(30)->setVisible(False);
-	$sheet->getColumnDimensionByColumn(33)->setVisible(False);
 
 	$sheet->freezePane(XY($originX + 4, $originY +  $subtotalCount + $departmentCount + 3));
 
@@ -1229,7 +1120,7 @@ try {
 	$sheet->getPageSetup()->setFitToHeight(0);
 	$sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
 	$sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
-	$sheet->getPageSetup()->setPrintArea(RXY(4, $originY, 34, $originY + $subtotalCount + $departmentCount + 2));
+	$sheet->getPageSetup()->setPrintArea(RXY(4, $originY, 28, $originY + $subtotalCount + $departmentCount + 2));
 	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
 	$sheet->getHeaderFooter()->setOddHeader('&C Report Incassi Settimanali' . ': ' . $messaggio);
 	$sheet->getHeaderFooter()->setOddFooter('&L &D &T &R Pagina &P di &N');
@@ -1277,9 +1168,6 @@ function riclassificazioneDati(DateTime $dataInizioPeriodoAC, DateTime $dataFine
 
                 $penetrazione = $periodoRiclassificatoAC[$giorno['department']]['penetrazione'] + $giorno['penetrazione'];
                 $periodoRiclassificatoAC[$giorno['department']]['penetrazione'] = $penetrazione;
-
-                $ore = $periodoRiclassificatoAC[$giorno['department']]['ore'] + $giorno['ore'];
-                $periodoRiclassificatoAC[$giorno['department']]['ore'] = $ore;
             } else {
                 $periodoRiclassificatoAC[$giorno['department']] = [
                     'store' => $giorno['store'],
@@ -1289,8 +1177,7 @@ function riclassificazioneDati(DateTime $dataInizioPeriodoAC, DateTime $dataFine
                     'quantity' => $giorno['quantity'],
                     'totaltaxableamount' => $giorno['totaltaxableamount'],
                     'transazioni' => $giorno['transazioni'],
-                    'penetrazione' => $giorno['penetrazione'],
-                    'ore' => $giorno['ore']
+                    'penetrazione' => $giorno['penetrazione']
                 ];
             }
         }
@@ -1328,9 +1215,6 @@ function riclassificazioneDati(DateTime $dataInizioPeriodoAC, DateTime $dataFine
 
                 $penetrazione = $periodoRiclassificatoAP[$giorno['department']]['penetrazione'] + $giorno['penetrazione'];
                 $periodoRiclassificatoAP[$giorno['department']]['penetrazione'] = $penetrazione;
-
-                $ore = $periodoRiclassificatoAP[$giorno['department']]['ore'] + $giorno['ore'];
-                $periodoRiclassificatoAP[$giorno['department']]['ore'] = $ore;
             } else {
                 $periodoRiclassificatoAP[$giorno['department']] = [
                     'store' => $giorno['store'],
@@ -1340,8 +1224,7 @@ function riclassificazioneDati(DateTime $dataInizioPeriodoAC, DateTime $dataFine
                     'quantity' => $giorno['quantity'],
                     'totaltaxableamount' => $giorno['totaltaxableamount'],
                     'transazioni' => $giorno['transazioni'],
-                    'penetrazione' => $giorno['penetrazione'],
-                    'ore' => $giorno['ore']
+                    'penetrazione' => $giorno['penetrazione']
                 ];
             }
         }
@@ -1368,7 +1251,8 @@ function writeDepartmentRows()
     global $departmentCount;
     global $departmentList;
     global $currentRow;
-    global $subtotalCount;
+    global $subtotalCount, $subtotalDescription;
+    global $clientiSubtotaliAC, $clientiSubtotaliAP;
     global $integerFormat, $currencyFormat, $percentageFormat;
     global $originX;
     global $periodoRiclassificatoAC, $periodoRiclassificatoAP;
@@ -1376,7 +1260,7 @@ function writeDepartmentRows()
 	global $shop2Area, $shop2Type;
 	global $clientiTotaliSedeAC, $clientiTotaliSedeAP;
 
-    foreach ($departmentList as $department) {
+    foreach ($departmentList as $counter => $department) {
         $indexAC = $department;
         $indexAP = $department;
 
@@ -1386,8 +1270,6 @@ function writeDepartmentRows()
         $penetrazioneAP = key_exists( $indexAP, $periodoRiclassificatoAP ) ? $periodoRiclassificatoAP[$indexAP]['penetrazione'] : 0;
         $quantityAC = key_exists( $indexAC, $periodoRiclassificatoAC ) ? $periodoRiclassificatoAC[$indexAC]['quantity'] : 0;
         $quantityAP = key_exists( $indexAP, $periodoRiclassificatoAP ) ? $periodoRiclassificatoAP[$indexAP]['quantity'] : 0;
-        $oreAC = key_exists( $indexAC, $periodoRiclassificatoAC ) ? $periodoRiclassificatoAC[$indexAP]['ore'] : 0;
-        $oreAP = key_exists( $indexAP, $periodoRiclassificatoAP ) ? $periodoRiclassificatoAP[$indexAP]['ore'] : 0;
 
 	    // Gruppo Sede
 	    $currentColumn = $originX;
@@ -1492,35 +1374,21 @@ function writeDepartmentRows()
         // Delta Prezzo Medio %
         $currentColumn++;
 
-        // Pezzi per cliente A.C.
+        // Pezzi per cliente A.C. <- (usato per inserire la penetrazione anno corrente)
         $currentColumn++;
+        if ($counter < count($clientiSubtotaliAC)) {
+	        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clientiSubtotaliAC[$subtotalDescription[$counter]], DataType::TYPE_NUMERIC );
+	        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+        }
 
-        // Pezzi per cliente A.P.
+        // Pezzi per cliente A.P. <- (usato per inserire la penetrazione anno corrente)
         $currentColumn++;
+	    if ($counter < count($clientiSubtotaliAP)) {
+		    $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $clientiSubtotaliAP[$subtotalDescription[$counter]], DataType::TYPE_NUMERIC );
+		    $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $integerFormat );
+	    }
 
         // Delta Pezzi per Cliente %
-        $currentColumn++;
-
-        // Ore A.C.
-        $currentColumn++;
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $oreAC, DataType::TYPE_NUMERIC );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-
-        // Ore A.P.
-        $currentColumn++;
-        $sheet->setCellValueExplicitByColumnAndRow( $currentColumn, $currentRow, $oreAP, DataType::TYPE_NUMERIC );
-        $sheet->getStyleByColumnAndRow( $currentColumn, $currentRow )->getNumberFormat()->setFormatCode( $currencyFormat );
-
-        // Delta Ore %
-        $currentColumn++;
-
-        // Procapite A.C.
-        $currentColumn++;
-
-        // Procapite A.P.
-        $currentColumn++;
-
-        // Delta Procapite %
         $currentColumn++;
 
         $sheet->getRowDimension( $currentRow )->setRowHeight( 32 );

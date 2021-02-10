@@ -6,8 +6,8 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2021-02-06', $timeZone);
-$dataFine = new DateTime('2021-02-06', $timeZone);
+$dataInizio = new DateTime('2021-02-08', $timeZone);
+$dataFine = new DateTime('2021-02-08', $timeZone);
 
 // identificazione server
 // -------------------------------------------------------------------------------
@@ -55,14 +55,37 @@ try {
 
 	// creo la tabella salesPerDepartment sul db destinazione
     // -------------------------------------------------------------------------------
-	$stmt = "   CREATE TABLE IF NOT EXISTS mtx.`salesPerDepartment` (
+	$stmt = "   CREATE TABLE IF NOT EXISTS mtx.salesPerDepartment (
+					`store` varchar(4) NOT NULL DEFAULT '',
+					`ddate` date NOT NULL,
+					`department` varchar(100) NOT NULL DEFAULT '',
+					`totaltaxableamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+					`rowCount` int(11) NOT NULL DEFAULT '0',
+					`customerCount` int(11) NOT NULL DEFAULT '0',
+				PRIMARY KEY (`store`,`ddate`,`department`)
+				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+	$h_query = $destinationDb->prepare( $stmt );
+	$h_query->execute();
+
+	// creo la tabella penetrationPerSubtotal sul db destinazione
+	// -------------------------------------------------------------------------------
+	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`penetrationPerSubtotal` (
 				  `store` varchar(4) NOT NULL DEFAULT '',
 				  `ddate` date NOT NULL,
-				  `department` varchar(100) NOT NULL DEFAULT '',
-				  `totaltaxableamount` decimal(11,2) NOT NULL DEFAULT '0.00',
-				  `rowCount` int(11) NOT NULL DEFAULT '0',
-				  `customerCount` int(11) NOT NULL DEFAULT '0',
-				  PRIMARY KEY (`store`,`ddate`,`department`)
+				  `subtotal` varchar(100) NOT NULL DEFAULT '',
+				  `customerCount` int(11) NOT NULL,
+				  PRIMARY KEY (`store`,`ddate`,`subtotal`)
+				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+	$h_query = $destinationDb->prepare( $stmt );
+	$h_query->execute();
+
+	// creo la tabella customers sul db destinazione
+	// -------------------------------------------------------------------------------
+	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`customers` (
+					`store` varchar(4) NOT NULL DEFAULT '',
+					`ddate` date NOT NULL,
+					`customerCount` int(11) NOT NULL DEFAULT '0',
+					PRIMARY KEY (`store`,`ddate`)
 				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 	$h_query = $destinationDb->prepare( $stmt );
 	$h_query->execute();
@@ -71,7 +94,6 @@ try {
     // -------------------------------------------------------------------------------
     $stmt = "   select b.`BAR13-BAR2` barcode, b.`CODCIN-BAR2` codice, a.`IDSOTTOREPARTO` reparto 
                 from archivi.barartx2 as b join dimensioni.articolo as a on b.`CODCIN-BAR2`=a.`CODICE_ARTICOLO`;";
-
     $h_query = $sourceDb->prepare( $stmt );
     $h_query->execute();
     $result = $h_query->fetchAll( PDO::FETCH_ASSOC );
@@ -88,7 +110,6 @@ try {
                  values
                     (:store, :ddate, :reg, :trans, :department, :barcode, :articledepartment, :articlecode, :weight, :rowCount, :quantity, :totalamount, :totaltaxableamount, :fidelityCard)";
     $h_insert_query = $destinationDb->prepare( $stmt );
-
     $stmt = "   select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 
                            0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, 
                            sum(totaltaxableamount) totaltaxableamount, '' fidelityCard 
@@ -111,21 +132,65 @@ try {
 					(select distinct nuovoReparto department from mtx.sottoreparto order by 1) as b;";
 	$h_create_salesPerDepartment = $destinationDb->prepare( $stmt );
 
-	// preparo la query di creazione salesPerDepartment
+	// preparo la query di cancellazione salesPerDepartment
 	// -------------------------------------------------------------------------------
 	$stmt = "delete from mtx.salesPerDepartment where ddate = :ddate";
 	$h_delete_salesPerDepartment = $destinationDb->prepare( $stmt );
 
-	// preparo la query di insert salesPerDepartment
+	// preparo la query di inserimento salesPerDepartment
 	// -------------------------------------------------------------------------------
-		$stmt = "	insert into mtx.salesPerDepartment
-					select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, count(distinct s.reg, s.trans) transCount 
-					from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
-					where s.ddate = :ddate 
-					group by 1,2,3";
+	$stmt = "	insert into mtx.salesPerDepartment
+				select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, count(distinct s.reg, s.trans) transCount 
+				from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+				where s.ddate = :ddate 
+				group by 1,2,3";
 	$h_insert_salesPerDepartment = $destinationDb->prepare( $stmt );
 
-    // eseguo il caricamento dei dati
+	// preparo la query di creazione penetrationPerSubtotal (record vuoti)
+	// -------------------------------------------------------------------------------
+	$stmt = "	insert ignore into mtx.penetrationPerSubtotal
+				select a.store, :ddate ddate, b.subtotal, 0 customerCount 
+				from (
+				    select codice store 
+				    from archivi.negozi 
+				    where societa in ('02','05') and codice not like '00%' and data_inizio <= :ddate and (data_fine >= :ddate or data_fine is null)
+				    ) as a join (select distinct subtotali subtotal from mtx.sottoreparto order by 1) as b";
+	$h_create_penetrationPerDepartment = $destinationDb->prepare( $stmt );
+
+	// preparo la query di cancellazione penetrationPerSubtotal
+	// -------------------------------------------------------------------------------
+	$stmt = "delete from mtx.penetrationPerSubtotal where ddate = :ddate";
+	$h_delete_penetrationPerDepartment = $destinationDb->prepare( $stmt );
+
+	// preparo la query di inserimento penetrationPerSubtotal
+	// -------------------------------------------------------------------------------
+	$stmt = "	insert into mtx.penetrationPerSubtotal
+				select s.store, s.ddate, r.subtotali subtotal, count(distinct s.reg, s.trans) customerCount 
+				from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+				where ddate = :ddate
+				group by 1,2,3";
+	$h_insert_penetrationPerDepartment = $destinationDb->prepare( $stmt );
+
+	// preparo la query di creazione customers (record vuoti)
+	// -------------------------------------------------------------------------------
+	$stmt = "	insert ignore into mtx.customers
+				select codice store, :ddate ddate, 0 customerCount
+				from archivi.negozi 
+				where societa in ('02','05') and codice not like '00%' and data_inizio <= :ddate and (data_fine >= :ddate or data_fine is null)";
+	$h_create_customers = $destinationDb->prepare( $stmt );
+
+	// preparo la query di cancellazione customers
+	// -------------------------------------------------------------------------------
+	$stmt = "delete from mtx.customers where ddate = :ddate";
+	$h_delete_customers = $destinationDb->prepare( $stmt );
+
+	// preparo la query di inserimento customers
+	// -------------------------------------------------------------------------------
+	$stmt = "	insert into mtx.customers
+				select s.store, s.ddate, count(distinct s.reg, s.trans) customerCount from mtx.sales as s where s.ddate = :ddate group by 1,2;";
+	$h_insert_customers = $destinationDb->prepare( $stmt );
+
+	// eseguo il caricamento dei dati
     // -------------------------------------------------------------------------------
     $data = clone $dataInizio;
     while ($data <= $dataFine) {
@@ -189,6 +254,17 @@ try {
 	    $h_delete_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
 	    $h_insert_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
 	    $h_create_salesPerDepartment->execute([':ddate' => $data->format('Y-m-d')]); // <- creo i reparti che non si sono movimentati nella giornata
+
+	    // creo e poi calcolo la penetrazione per subtotale
+	    $h_delete_penetrationPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_insert_penetrationPerDepartment->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_create_penetrationPerDepartment->execute([':ddate' => $data->format('Y-m-d')]); // <- creo i subtotali che non si sono movimentati nella giornata
+
+	    // creo e poi calcolo i clienti
+	    $h_delete_customers->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_insert_customers->execute([':ddate' => $data->format('Y-m-d')]);
+	    $h_create_customers->execute([':ddate' => $data->format('Y-m-d')]); // <- creo i clienti che non si sono movimentati nella giornata
+
 
 	    $fineCaricamento = (new DateTime())->setTimezone($timeZone);
 	    echo "Fine caricamento giornata del " . $data->format('Y-m-d') . "\n";
