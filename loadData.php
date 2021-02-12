@@ -6,8 +6,8 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2021-02-08', $timeZone);
-$dataFine = new DateTime('2021-02-08', $timeZone);
+$dataInizio = new DateTime('2021-02-09', $timeZone);
+$dataFine = new DateTime('2021-02-11', $timeZone);
 
 // identificazione server
 // -------------------------------------------------------------------------------
@@ -61,6 +61,7 @@ try {
 					`department` varchar(100) NOT NULL DEFAULT '',
 					`totaltaxableamount` decimal(11,2) NOT NULL DEFAULT '0.00',
 					`rowCount` int(11) NOT NULL DEFAULT '0',
+  					`quantity` int(11) NOT NULL DEFAULT '0',
 					`customerCount` int(11) NOT NULL DEFAULT '0',
 				PRIMARY KEY (`store`,`ddate`,`department`)
 				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
@@ -140,7 +141,7 @@ try {
 	// preparo la query di inserimento salesPerDepartment
 	// -------------------------------------------------------------------------------
 	$stmt = "	insert into mtx.salesPerDepartment
-				select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, count(distinct s.reg, s.trans) transCount 
+				select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, ifnull(sum(s.quantity),0) quantity, count(distinct s.reg, s.trans) customerCount 
 				from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
 				where s.ddate = :ddate 
 				group by 1,2,3";
