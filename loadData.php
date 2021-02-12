@@ -128,7 +128,7 @@ try {
 	// preparo la query di creazione salesPerDepartment (record vuoti)
 	// -------------------------------------------------------------------------------
 	$stmt = "	insert ignore into mtx.salesPerDepartment
-				select a.store, :ddate ddate, b.department, 0 totaltaxableamount, 0 rowCount, 0 customerCount from 
+				select a.store, :ddate ddate, b.department, 0 totaltaxableamount, 0 rowCount, 0 quantity, 0 customerCount from 
 					(select codice store from archivi.negozi where societa in ('02','05') and codice not like '00%' and data_inizio <= :ddate and (data_fine >= :ddate or data_fine is null)) as a join
 					(select distinct nuovoReparto department from mtx.sottoreparto order by 1) as b;";
 	$h_create_salesPerDepartment = $destinationDb->prepare( $stmt );
