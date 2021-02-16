@@ -579,7 +579,7 @@ try {
 					$cellList[] = XY($currentColumn + 15, $subtotalCount + 2 + $currentRow + ($i * $departmentCount)) ;
 				}
 				$formula = '=SUBTOTAL(109, ' . implode(',', $cellList). ')';
-				echo "$formula\n";
+				//echo "$formula\n";
 				$sheet->setCellValueExplicitByColumnAndRow($currentColumn, $currentRow, $formula, DataType::TYPE_FORMULA);
 				$sheet->getStyleByColumnAndRow($currentColumn, $currentRow)->getNumberFormat()->setFormatCode($integerFormat);
 				$penetrazioneAC_XY = XY($currentColumn, $currentRow);
