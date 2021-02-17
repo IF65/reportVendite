@@ -6,8 +6,8 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2020-02-17', $timeZone);
-$dataFine = new DateTime('2020-02-23', $timeZone);
+$dataInizio = new DateTime('2021-02-15', $timeZone);
+$dataFine = new DateTime('2021-02-16', $timeZone);
 
 // identificazione server
 // -------------------------------------------------------------------------------
