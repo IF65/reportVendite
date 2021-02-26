@@ -6,8 +6,17 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
-$dataInizio = new DateTime('2021-02-15', $timeZone);
-$dataFine = new DateTime('2021-02-16', $timeZone);
+if ($argc == 1) {
+	$dataInizio = new DateTime('2021-02-19', $timeZone);
+	$dataFine = new DateTime('2021-02-20', $timeZone);
+} elseif ($argc == 2) {
+	$dataInizio = new DateTime($argv[1], $timeZone);
+	$dataFine = new DateTime($argv[1], $timeZone);
+} else {
+	$dataInizio = new DateTime($argv[1], $timeZone);
+	$dataFine = new DateTime($argv[2], $timeZone);
+}
+
 
 // identificazione server
 // -------------------------------------------------------------------------------
