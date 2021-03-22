@@ -24,7 +24,7 @@ $sourceHostname = '10.11.14.128';
 $sourceUser = 'root';
 $sourcePassword = 'mela';
 
-$destinationHostname = '10.11.14.177';
+$destinationHostname = '10.11.14.248';
 $destinationUser = 'root';
 $destinationPassword = 'mela';
 
