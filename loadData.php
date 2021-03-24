@@ -205,7 +205,7 @@ try {
     $data = clone $dataInizio;
     while ($data <= $dataFine) {
 	    $inizioCaricamento = (new DateTime())->setTimezone($timeZone);
-	    echo "Inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:m:s') . "\n";
+	    echo "Inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:i:s') . "\n";
 
 	    $h_count_sales_query->execute([':ddate' => $data->format('Y-m-d')]);
 	    $value = $h_count_sales_query->fetch(PDO::FETCH_ASSOC);
@@ -277,7 +277,7 @@ try {
 
 
 	    $fineCaricamento = (new DateTime())->setTimezone($timeZone);
-	    echo "Fine caricamento giornata del " . $data->format('Y-m-d') . "\n";
+	    echo "Fine caricamento giornata del " . $data->format('Y-i-d') . "\n";
 
 	    $data->add(new DateInterval('P1D'));
     }
