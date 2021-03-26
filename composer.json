@@ -8,6 +8,7 @@
     ],
     "require": {
         "guzzlehttp/guzzle": "^7.0",
-        "phpoffice/phpspreadsheet": "^1.14"
+        "phpoffice/phpspreadsheet": "^1.14",
+        "ulrichsg/getopt-php": "^3.4"
     }
 }

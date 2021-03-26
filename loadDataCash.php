@@ -6,6 +6,7 @@ require 'vendor/autoload.php';
 
 $timeZone = new DateTimeZone('Europe/Rome');
 
+
 if ($argc == 1) {
 	$dataInizio = new DateTime('2020-01-01', $timeZone);
 	$dataFine = new DateTime('2020-12-31', $timeZone);
