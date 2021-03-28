@@ -15,7 +15,7 @@ $password = "mela";
 
 $timeZone = new DateTimeZone('Europe/Rome');
 $currentDate = new DateTime('now', $timeZone);
-$startingDate = (clone $currentDate)->sub(new DateInterval('P820D'));
+$startingDate = (clone $currentDate)->sub(new DateInterval('P7D'));
 
 // inizio
 // -----------------------------------------------------------
