@@ -41,10 +41,12 @@ try {
 	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`control` (
 				  `store` varchar(4) NOT NULL DEFAULT '',
 				  `ddate` date NOT NULL,
-				  `totalamount` decimal(11,2) NOT NULL,
-				  `totalhours` decimal(11,2) NOT NULL,
-				  `customercount` int(10) unsigned NOT NULL,
-				  `closed` tinyint(3) unsigned NOT NULL,
+				  `totalamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+				  `totalhours` decimal(11,2) NOT NULL DEFAULT '0.00',
+				  `customercount` int(10) unsigned NOT NULL DEFAULT '0',
+				  `closed` tinyint(3) unsigned NOT NULL DEFAULT '0',
+				  `salesamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+				  `departmentamount` decimal(11,2) NOT NULL DEFAULT '0.00',
 				  PRIMARY KEY (`store`,`ddate`)
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 	$h_create = $db->prepare($stmt);

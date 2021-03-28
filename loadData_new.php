@@ -154,6 +154,22 @@ if ($sede != '') {
 		$h_query = $destinationDb->prepare($stmt);
 		$h_query->execute();
 
+		// creo la tabella customers sul db destinazione
+		// -------------------------------------------------------------------------------
+		$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`control` (
+					  `store` varchar(4) NOT NULL DEFAULT '',
+					  `ddate` date NOT NULL,
+					  `totalamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+					  `totalhours` decimal(11,2) NOT NULL DEFAULT '0.00',
+					  `customercount` int(10) unsigned NOT NULL DEFAULT '0',
+					  `closed` tinyint(3) unsigned NOT NULL DEFAULT '0',
+					  `salesamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+					  `departmentamount` decimal(11,2) NOT NULL DEFAULT '0.00',
+					  PRIMARY KEY (`store`,`ddate`)
+					) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+		$h_query = $destinationDb->prepare($stmt);
+		$h_query->execute();
+
 		// carico la corrispondenza barcode => [codice articolo, reparto]
 		// -------------------------------------------------------------------------------
 		$stmt = "   select b.`BAR13-BAR2` barcode, b.`CODCIN-BAR2` codice, a.`IDSOTTOREPARTO` reparto 
@@ -239,25 +255,34 @@ if ($sede != '') {
 		// preparo la query di creazione record di customers (solo record vuoti)
 		// -------------------------------------------------------------------------------
 		$stmt = "	insert ignore into mtx.customers
-				select :store store, :ddate ddate, 0 customerCount";
+					select :store store, :ddate ddate, 0 customerCount";
 		$h_create_customers = $destinationDb->prepare($stmt);
 
 		// preparo la query di cancellazione customers
 		// -------------------------------------------------------------------------------
-		$stmt = "delete from mtx.customers where ddate = :ddate and store = :store";
+		$stmt = "	delete from mtx.customers where ddate = :ddate and store = :store";
 		$h_delete_customers = $destinationDb->prepare($stmt);
 
 		// preparo la query di inserimento customers
 		// -------------------------------------------------------------------------------
 		$stmt = "	insert into mtx.customers
-				select s.store, s.ddate, count(distinct s.reg, s.trans) customerCount 
-				from mtx.sales as s where s.ddate = :ddate and store = :store group by 1,2;";
+					select s.store, s.ddate, count(distinct s.reg, s.trans) customerCount 
+					from mtx.sales as s where s.ddate = :ddate and store = :store group by 1,2;";
 		$h_insert_customers = $destinationDb->prepare($stmt);
+
+		// preparo la query di update control
+		// -------------------------------------------------------------------------------
+		$stmt = "	update mtx.control as c join 
+    				(select ddate, store, sum(totaltaxableamount) totalamount from mtx.sales where ddate = :ddate and store = :store group by 1,2) as s on c.store=s.store and c.ddate=s.ddate join 
+	    			(select ddate, store, sum(totaltaxableamount) totalamount from mtx.salesPerDepartment where ddate = :ddate and store = :store group by 1,2) as d on c.store=d.store 
+					set c.salesamount = s.totalamount, c.departmentamount = d.totalamount 
+					where c.ddate = :ddate and c.store = :store";
+		$h_update_control = $destinationDb->prepare($stmt);
 
 		// eseguo il caricamento dei dati
 		// -------------------------------------------------------------------------------
-		$data = clone $dataInizio;
-		while ($data <= $dataFine) {
+		$data = DateTime::createFromFormat('Y-m-d', $dataInizio, $timeZone); ;
+		while ($data <= DateTime::createFromFormat('Y-m-d', $dataFine, $timeZone)) {
 			$inizioCaricamento = (new DateTime())->setTimezone($timeZone);
 			echo "Negozio $sede inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:i:s') . "\n";
 
@@ -333,6 +358,8 @@ if ($sede != '') {
 			$h_insert_customers->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 			$h_create_customers->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]); // <- creo i clienti che non si sono movimentati nella giornata
 
+			// aggiorno la tebella di controllo
+			$h_update_control->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 
 			$fineCaricamento = (new DateTime())->setTimezone($timeZone);
 			echo "Negozio $sede fine caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:i:s') . "\n";
