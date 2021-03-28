@@ -93,7 +93,7 @@ try {
 
 	if ($response->getStatusCode() == 200) {
 		$reparti = json_decode($response->getBody()->getContents(), true);
-		$dati = file_get_contents('/Users/if65/Desktop/totali.json');
+		$dati = file_get_contents('/totali.json');
 		$reparti = json_decode($dati, true);
 		if (isset($reparti)) {
 			foreach ($reparti as $reparto) {
