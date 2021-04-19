@@ -2,7 +2,7 @@
 
 ini_set('memory_limit','8192M');
 
-require 'vendor/autoload.php';
+require __DIR__ . "/../vendor/autoload.php";
 
 use GetOpt\GetOpt as Getopt;
 use GetOpt\Option;
