@@ -15,14 +15,14 @@ $password = "mela";
 
 $timeZone = new DateTimeZone('Europe/Rome');
 $currentDate = new DateTime('now', $timeZone);
-$startingDate = (clone $currentDate)->sub(new DateInterval('P7D'));
+$startingDate = (clone $currentDate)->sub(new DateInterval('P14D'));
 
 // inizio
 // -----------------------------------------------------------
 
 try {
 	// apro il datasource
-	// -------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------------†-
 	$db = new PDO("mysql:host=$hostname", $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
 	// creazione tabelle
