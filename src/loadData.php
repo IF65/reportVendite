@@ -63,7 +63,7 @@ if (!preg_match('/^\d{4}\-\d{2}\-\d{2}$/', $dataFine)) {
 }
 
 $sede = $options->getOption('s');
-if (!preg_match('/^(01|02|04|05|31|36)\d{2}$/', $sede)) {
+if (!preg_match('/^(01|02|04|05|31|36|60)\d{2}$/', $sede)) {
 	$sede = '';
 }
 
@@ -270,7 +270,13 @@ if ($sede != '') {
 					from mtx.sales as s where s.ddate = :ddate and store = :store group by 1,2;";
 		$h_insert_customers = $destinationDb->prepare($stmt);
 
-		// preparo la query di update control
+		// preparo la query di creazione record vuoto di control
+		// -------------------------------------------------------------------------------
+		$stmt = "	insert ignore into mtx.control (store, ddate, totalamount, totalhours, customercount, closed, salesamount, departmentamount) 
+					values (:store, :ddate, 0.00, 0.0, 0, 0, 0.00, 0.00)";
+		$h_create_record_control = $destinationDb->prepare($stmt);
+
+		// preparo la query di update di control
 		// -------------------------------------------------------------------------------
 		$stmt = "	update mtx.control as c join 
     				(select ddate, store, sum(totaltaxableamount) totalamount from mtx.sales where ddate = :ddate and store = :store group by 1,2) as s on c.store=s.store and c.ddate=s.ddate join 
@@ -359,6 +365,7 @@ if ($sede != '') {
 			$h_create_customers->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]); // <- creo i clienti che non si sono movimentati nella giornata
 
 			// aggiorno la tebella di controllo
+			$h_create_record_control->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 			$h_update_control->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 
 			$fineCaricamento = (new DateTime())->setTimezone($timeZone);

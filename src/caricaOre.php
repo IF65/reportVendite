@@ -16,6 +16,7 @@ $password = "mela";
 $timeZone = new DateTimeZone('Europe/Rome');
 $currentDate = new DateTime('now', $timeZone);
 $startingDate = (clone $currentDate)->sub(new DateInterval('P14D'));
+//$startingDate = DateTime::createFromFormat('Y-m-d', '2020-01-01', $timeZone);
 
 // inizio
 // -----------------------------------------------------------
