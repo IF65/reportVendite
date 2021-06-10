@@ -191,11 +191,19 @@ if ($sede != '') {
                     (:store, :ddate, :reg, :trans, :department, :barcode, :articledepartment, :articlecode, :weight, :rowCount, :quantity, :totalamount, :totaltaxableamount, :fidelityCard)";
 		$h_insert_sales = $destinationDb->prepare($stmt);
 
-		$stmt = "   select store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 
+		$stmt = "	select codice store from archivi.negozi where codice = :store 
+					union all 
+					select codiceTcPos store from archivi.negozi where codice = :store and codiceTcPos <> ''";
+		$h_load_store_list = $sourceDb->prepare($stmt);
+		$h_load_store_list->execute([':store' => $sede]);
+		$value = $h_load_store_list->fetchAll(PDO::FETCH_COLUMN);
+		$list = '\'' . implode('\',\'', $value) . '\'';
+
+		$stmt = "   select case when store<>:store then :store else store end store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 
                            0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, 
                            sum(case when totalamount<0 then totaltaxableamount*-1 else totaltaxableamount end) totaltaxableamount, '' fidelityCard 
 	                from mtx.idc 
-	                where ddate = :data and binary recordtype = 'S' and recordcode1 = 1 and store = :store
+	                where ddate = :data and binary recordtype = 'S' and recordcode1 = 1 and store in ($list)
 	                group by 1,2,3,4,5,6
 	                having totalamount <> 0";
 		$h_load_idc = $sourceDb->prepare($stmt);
