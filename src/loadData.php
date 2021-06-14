@@ -234,7 +234,7 @@ if ($sede != '') {
 		// -------------------------------------------------------------------------------
 		$stmt = "	insert into mtx.salesPerDepartment
 				select s.store, s.ddate, ifnull(r.nuovoReparto,'SCATOLAME') department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, ifnull(sum(s.quantity),0) quantity, count(distinct s.reg, s.trans) customerCount 
-				from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
+				from mtx.sales as s left join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
 				where s.ddate = :ddate and s.store = :store
 				group by 1,2,3";
 		$h_insert_salesPerDepartment = $destinationDb->prepare($stmt);
