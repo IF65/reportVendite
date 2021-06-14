@@ -233,7 +233,7 @@ if ($sede != '') {
 		// preparo la query di inserimento salesPerDepartment
 		// -------------------------------------------------------------------------------
 		$stmt = "	insert into mtx.salesPerDepartment
-				select s.store, s.ddate, r.nuovoReparto department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, ifnull(sum(s.quantity),0) quantity, count(distinct s.reg, s.trans) customerCount 
+				select s.store, s.ddate, ifnull(r.nuovoReparto,'0100') department, ifnull(sum(s.totaltaxableamount),0) totaltaxableamount, ifnull(sum(s.rowCount),0) rowCount, ifnull(sum(s.quantity),0) quantity, count(distinct s.reg, s.trans) customerCount 
 				from mtx.sales as s join mtx.sottoreparto as r on s.articledepartment = r.idsottoreparto 
 				where s.ddate = :ddate and s.store = :store
 				group by 1,2,3";
