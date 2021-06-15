@@ -25,6 +25,8 @@ $options = new GetOpt([
 		->setDescription('Sede da caricare.'),
 	Option::create(null, 'deleteAll', GetOpt::NO_ARGUMENT )
 		->setDescription('Elimina tutti i dati eventualmente presenti prima di caricare.')->setDefaultValue(0),
+	Option::create(null, 'keepSales', GetOpt::NO_ARGUMENT )
+		->setDescription('Elimina tutti i dati eventualmente presenti prima di caricare tranne la tabella sales.')->setDefaultValue(0),
 ]);
 
 // process arguments and catch user errors
@@ -45,6 +47,10 @@ try {
 $debug = $options->getOption('d');
 
 $deletaAll = $options->getOption('deleteAll');
+$keepSales = $options->getOption('keepSales');
+if (! $deletaAll) {
+	$keepSales = 0;
+}
 
 $help = $options->getOption('h');
 if ($help) {
@@ -300,7 +306,8 @@ if ($sede != '') {
 			$inizioCaricamento = (new DateTime())->setTimezone($timeZone);
 			echo "Negozio $sede inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:i:s') . "\n";
 
-			if ($deletaAll) {
+
+			if ($deletaAll && ! $keepSales) {
 				$h_delete_sales->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 			}
 
@@ -308,52 +315,54 @@ if ($sede != '') {
 			$value = $h_count_sales->fetch(PDO::FETCH_ASSOC);
 			$salesRecordCount = $value['recordCount'] * 1;
 
-			if (!$salesRecordCount) {
-				$h_load_idc->execute(['data' => $data->format('Y-m-d'), ':store' => $sede]);
-				$sales = $h_load_idc->fetchAll(PDO::FETCH_ASSOC);
+			if (! $keepSales) {
+				if (!$salesRecordCount) {
+					$h_load_idc->execute(['data' => $data->format('Y-m-d'), ':store' => $sede]);
+					$sales = $h_load_idc->fetchAll(PDO::FETCH_ASSOC);
 
-				foreach ($sales as $sale) {
-					$quantity = $sale['quantity'];
-					$weight = $sale['weight'];
-					$barcode = $sale['barcode'];
-					if (preg_match('/^(2\d{6})00000.$/', $barcode, $matches)) {
-						$barcode = $matches[1];
-						$weight = $quantity;
-						$quantity = $sale['rowCount'];
-					}
-
-					$articleCode = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['codice'] : '';
-					$articledepartment = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['reparto'] : '';
-					if ($articledepartment == '') {
-						if ($sale['department'] > 9 && $sale['department'] < 100) {
-							$articledepartment = '0001';
-						} elseif ($sale['department'] < 10) {
-							$articledepartment = str_pad($sale['department'] * 100, 4, "0", STR_PAD_LEFT);
-						} else {
-							$articledepartment = str_pad($sale['department'], 4, "0", STR_PAD_LEFT);
+					foreach ($sales as $sale) {
+						$quantity = $sale['quantity'];
+						$weight = $sale['weight'];
+						$barcode = $sale['barcode'];
+						if (preg_match('/^(2\d{6})00000.$/', $barcode, $matches)) {
+							$barcode = $matches[1];
+							$weight = $quantity;
+							$quantity = $sale['rowCount'];
 						}
-					}
-					$totaltaxableamount = $sale['totaltaxableamount'];
-					if ($quantity < 0 && $totaltaxableamount > 0) {
-						$totaltaxableamount = $totaltaxableamount * -1;
-					}
 
-					$h_insert_sales->execute([
-						'store' => $sale['store'],
-						'ddate' => $sale['ddate'],
-						'reg' => $sale['reg'],
-						'trans' => $sale['trans'],
-						'department' => $sale['department'],
-						'barcode' => $barcode,
-						'articledepartment' => $articledepartment,
-						'articlecode' => $articleCode,
-						'weight' => $weight,
-						'rowCount' => $sale['rowCount'],
-						'quantity' => $quantity,
-						'totalamount' => $sale['totalamount'],
-						'totaltaxableamount' => $totaltaxableamount,
-						'fidelityCard' => $sale['fidelityCard']
-					]);
+						$articleCode = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['codice'] : '';
+						$articledepartment = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['reparto'] : '';
+						if ($articledepartment == '') {
+							if ($sale['department'] > 9 && $sale['department'] < 100) {
+								$articledepartment = '0001';
+							} elseif ($sale['department'] < 10) {
+								$articledepartment = str_pad($sale['department'] * 100, 4, "0", STR_PAD_LEFT);
+							} else {
+								$articledepartment = str_pad($sale['department'], 4, "0", STR_PAD_LEFT);
+							}
+						}
+						$totaltaxableamount = $sale['totaltaxableamount'];
+						if ($quantity < 0 && $totaltaxableamount > 0) {
+							$totaltaxableamount = $totaltaxableamount * -1;
+						}
+
+						$h_insert_sales->execute([
+							'store' => $sale['store'],
+							'ddate' => $sale['ddate'],
+							'reg' => $sale['reg'],
+							'trans' => $sale['trans'],
+							'department' => $sale['department'],
+							'barcode' => $barcode,
+							'articledepartment' => $articledepartment,
+							'articlecode' => $articleCode,
+							'weight' => $weight,
+							'rowCount' => $sale['rowCount'],
+							'quantity' => $quantity,
+							'totalamount' => $sale['totalamount'],
+							'totaltaxableamount' => $totaltaxableamount,
+							'fidelityCard' => $sale['fidelityCard']
+						]);
+					}
 				}
 			}
 
@@ -372,7 +381,7 @@ if ($sede != '') {
 			$h_insert_customers->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 			$h_create_customers->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]); // <- creo i clienti che non si sono movimentati nella giornata
 
-			// aggiorno la tebella di controllo
+			// aggiorno la tabella di controllo
 			$h_create_record_control->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 			$h_update_control->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 
