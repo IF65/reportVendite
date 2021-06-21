@@ -69,7 +69,7 @@ if (!preg_match('/^\d{4}\-\d{2}\-\d{2}$/', $dataFine)) {
 }
 
 $sede = $options->getOption('s');
-if (!preg_match('/^(01|02|04|05|31|36|60)\d{2}$/', $sede)) {
+if (!preg_match('/^(00|01|02|04|05|31|36|60)\d{2}$/', $sede)) {
 	$sede = '';
 }
 
