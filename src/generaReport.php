@@ -22,13 +22,13 @@ $timeZone = new DateTimeZone('Europe/Rome');
 /**
  * date di inizio e fine settimana corrente (da parametrizzare su linea di comando)
  */
-$messaggio = "Settimana 4";
-$dataCorrenteAC = new DateTime('2021-05-30', $timeZone);
-$dataInizioAC = new DateTime('2021-05-24', $timeZone);
-$dataFineAC = new DateTime('2021-05-30', $timeZone);
-$dataCorrenteAP = new DateTime('2019-05-31', $timeZone);
-$dataInizioAP = new DateTime('2019-05-25', $timeZone);
-$dataFineAP = new DateTime('2019-05-31', $timeZone);
+$messaggio = "Settimana 25";
+$dataCorrenteAC = new DateTime('2021-06-27', $timeZone);
+$dataInizioAC = new DateTime('2021-06-21', $timeZone);
+$dataFineAC = new DateTime('2021-06-27', $timeZone);
+$dataCorrenteAP = new DateTime('2020-06-28', $timeZone);
+$dataInizioAP = new DateTime('2020-06-22', $timeZone);
+$dataFineAP = new DateTime('2020-06-28', $timeZone);
 
 /**
  * parametri per l'accesso all'host
@@ -102,6 +102,8 @@ $subtotalCount = sizeof($subtotalList);
  * calcolo i dati per alimentare il report utilizzando il periodo prescelto e il
  * tipo report prescelto.
  */
+
+/** report per negozio */
 $stmt="	select
 			d.store, 
 			d.department,
@@ -124,17 +126,10 @@ $stmt="	select
 			ifnull(sum(case when d.ddate >= :startCY and d.ddate <= :stopCY then c.customerCount else 0 end),0) customerCY,
 			ifnull(sum(case when d.ddate >= :startLY and d.ddate <= :stopLY then c.customerCount else 0 end),0) customerLY
 		from mtx.salesPerDepartment as d join (select distinct nuovoReparto department, sortOrder, subtotali subtotal, sortOrderSubTotale sortOrderSubtotal from mtx.sottoreparto ) as r on d.department = r.department join mtx.customers as c on c.`ddate`=d.`ddate` and c.`store`=d.`store` join mtx.penetrationPerSubtotal as p on p.`ddate`=d.`ddate` and p.`store`=d.`store` and p.subtotal=r.subtotal join archivi.negozi as n on d.store = n.codice 
-		where ((d.ddate >= :startCY and d.ddate <= :stopCY) or (d.ddate >= :startLY and d.ddate <= :stopLY)) 
+		where ((d.ddate >= :startCY and d.ddate <= :stopCY) or (d.ddate >= :startLY and d.ddate <= :stopLY)) and d.store = :store
 		group by 1,2
 		order by store, sortOrderSubtotal, sortOrder;";
-$h_query = $db->prepare($stmt);
-$h_query->execute([
-	':startCY' => $dataInizioAC->format( 'Y-m-d' ),
-	':stopCY' => $dataFineAC->format( 'Y-m-d' ),
-	':startLY' => $dataInizioAP->format( 'Y-m-d' ),
-	':stopLY' => $dataFineAP->format( 'Y-m-d' )
-]);
-$result = $h_query->fetchAll(PDO::FETCH_ASSOC);
+$h_query_detail_store = $db->prepare($stmt);
 
 /**
  * per scrivere le pagine trasferisco i dati in un array associativo di pagina. Per esempio nel caso si tratti
@@ -143,36 +138,60 @@ $result = $h_query->fetchAll(PDO::FETCH_ASSOC);
  * di area, di tipo negozio oppure dei totali.
  */
 
-/** negozi */
 $spreadsheet = new Spreadsheet();
 $spreadsheet->getDefaultStyle()->getFont()->setName( 'Calibri' );
 $spreadsheet->getDefaultStyle()->getFont()->setSize( 12 );
 $spreadsheet->getDefaultStyle()->getAlignment()->setVertical( Alignment::VERTICAL_CENTER );
 
-$spreadsheet->removeSheetByIndex(0);
+//$spreadsheet->removeSheetByIndex(0);
 foreach ($shopList as $shopCode => $shopDescription) {
-	$sheet = [];
-	foreach ($result as $row) {
-		if ($row['store'] == $shopCode) {
-			$sheet[] = $row;
+	if ($shopCode == '0101') {
+		$h_query_detail_store->execute([
+			':store' => $shopCode,
+			':startCY' => $dataInizioAC->format('Y-m-d'),
+			':stopCY' => $dataFineAC->format('Y-m-d'),
+			':startLY' => $dataInizioAP->format('Y-m-d'),
+			':stopLY' => $dataFineAP->format('Y-m-d')
+		]);
+		$result = $h_query_detail_store->fetchAll(PDO::FETCH_ASSOC);
+
+		$rows = [];
+		foreach ($result as $row) {
+			$rows[] = $row;
 		}
+		$data = ['store' => $shopCode, 'data' => $rows];
+
+		createAndFillSheet($data);
+
 	}
-
-	$worksheet = new Worksheet($spreadsheet, (string)$shopCode);
-	$worksheet->getDefaultRowDimension()->setRowHeight( 24 );
-	$worksheet->getDefaultColumnDimension()->setWidth( 12 );
-
-	fillSheet($worksheet, $sheet);
-	$spreadsheet->addSheet($worksheet);
 }
 
 $writer = new Xlsx($spreadsheet);
 $writer->save('/Users/if65/Desktop/if65_0.xlsx');
 
-function fillSheet(Worksheet &$worksheet, array $sheet)
+function fillSheet(Spreadsheet &$spreadsheet, array $data)
 {
-	/*$text = json_encode($sheet, JSON_PRETTY_PRINT);
-	file_put_contents('/Users/if65/Desktop/dati.json',$text);*/
+	/**
+	 * creo un nuovo worksheet se serve. il workbook parte con un worksheet precaricato
+	 * quindi lo utilizzo mentre i successivi li creo.
+	 */
+	$worksheet = new Worksheet($spreadsheet, $data['store']);
+	//$spreadsheet->addSheet($worksheet);
+	/**
+	 * definizione stili
+	 */
+	$styleBorderArray = [
+		'borders' => [
+			'outline' => [
+				'borderStyle' => Border::BORDER_MEDIUM,
+				'color' => ['argb' => 'FF000000'],
+			],
+		],
+	];
+
+	$worksheet->getDefaultRowDimension()->setRowHeight(24);
+	$worksheet->getDefaultColumnDimension()->setWidth(12);
+	$worksheet->getStyle( 'A1' )->applyFromArray( $styleBorderArray );
 
 	$subtotals = [];
 	foreach ($sheet as $row) {
@@ -230,6 +249,8 @@ function fillSheet(Worksheet &$worksheet, array $sheet)
 	$worksheet->mergeCellsByColumnAndRow(20, $y, 22, $y);
 	$worksheet->setCellValueExplicitByColumnAndRow(23, $y, 'Pezzi per Cliente', DataType::TYPE_STRING);
 	$worksheet->mergeCellsByColumnAndRow(23, $y, 25, $y);
+	//$style = $worksheet->getStyle( RXY( 1, $y, 23, $y) );
+	$worksheet->getStyle( 'A1' )->applyFromArray( $styleBorderArray );
 
 	$y = 3;
 	//$worksheet->getRowDimension($y)->setRowHeight(12);
@@ -272,7 +293,7 @@ function fillSheet(Worksheet &$worksheet, array $sheet)
 				$customerCountPerSubtotalCY = $row['customerCountPerSubtotalCY'];
 				$customerCountPerSubtotalLY = $row['customerCountPerSubtotalLY'];
 
-				//$worksheet->setCellValueExplicitByColumnAndRow(1, $y, $row['department'], DataType::TYPE_STRING);
+				$worksheet->setCellValueExplicitByColumnAndRow(1, $y, $row['department'], DataType::TYPE_STRING);
 
 				/** incasso */
 				$incassoAC_XY = XY(2, $y);
@@ -591,6 +612,27 @@ function fillSheet(Worksheet &$worksheet, array $sheet)
 		$formula = "=IF($pezziPerScontrinoTotaleAP_XY<>0, ($pezziPerScontrinoTotaleAC_XY - $pezziPerScontrinoTotaleAP_XY)/$pezziPerScontrinoTotaleAP_XY,0)";
 		$worksheet->setCellValueExplicit($pezziPerScontrinoTotaleDelta_XY, $formula, DataType::TYPE_FORMULA);
 	}
+
+	$worksheet->getColumnDimensionByColumn( 1 )->setWidth( 30.0 );
+
+	$worksheet->getColumnDimensionByColumn( 3 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 6 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 9 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 12 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 15 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 18 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 21 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 24 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 27 )->setVisible(False);
+	$worksheet->getColumnDimensionByColumn( 30 )->setVisible(False);
+
+	$worksheet->setSelectedCell('A1');
+
+	$worksheet->getPageSetup()->setFitToWidth(1);
+	$worksheet->getPageSetup()->setFitToHeight(0);
+	$worksheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+	$worksheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+
 }
 
 function XY(int $x, int $y): string {

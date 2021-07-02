@@ -330,7 +330,17 @@ if ($sede != '') {
 							$quantity = $sale['rowCount'];
 						}
 
+						/**
+						 * nella tabella barartx il barcode è un decimal quindi gli zero iniziali vengono persi.
+						 * se dopo la prima ricerca l'articolo non è stato trovato e il barcode ha uno o più zeri
+						 * iniziali li elimino e ripeto la ricerca.
+						 */
 						$articleCode = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['codice'] : '';
+						if ($articleCode == '') {
+							if (preg_match('/^0+(\d*)$/', $barcode, $matches)) {
+								$articleCode = (key_exists($matches[1], $articoli)) ? $articoli[$matches[1]]['codice'] : '';
+							}
+						}
 						$articledepartment = (key_exists($barcode, $articoli)) ? $articoli[$barcode]['reparto'] : '';
 						if ($articledepartment == '') {
 							if ($sale['department'] > 9 && $sale['department'] < 100) {
