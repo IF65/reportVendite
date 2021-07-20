@@ -15,7 +15,7 @@ $password = "mela";
 
 $timeZone = new DateTimeZone('Europe/Rome');
 $currentDate = new DateTime('now', $timeZone);
-$startingDate = (clone $currentDate)->sub(new DateInterval('P14D'));
+$startingDate = (clone $currentDate)->sub(new DateInterval('P15D'));
 //$startingDate = DateTime::createFromFormat('Y-m-d', '2020-01-01', $timeZone);
 
 // inizio
@@ -28,13 +28,15 @@ try {
 
 	// creazione tabelle
 	// -------------------------------------------------------------------------------
-	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.hours (
+	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`hours` (
 				  `store` varchar(4) NOT NULL DEFAULT '',
 				  `ddate` date NOT NULL,
 				  `code` tinyint(3) unsigned NOT NULL,
 				  `amount` decimal(11,2) NOT NULL,
 				  `hours` decimal(11,2) NOT NULL,
-				  PRIMARY KEY (`store`,`ddate`,`code`)
+				  `department` varchar(100) NOT NULL DEFAULT '',
+				  PRIMARY KEY (`store`,`ddate`,`department`),
+				  KEY `store` (`store`,`ddate`,`code`)
 				) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 	$h_create = $db->prepare($stmt);
 	$h_create->execute();
@@ -53,15 +55,41 @@ try {
 	$h_create = $db->prepare($stmt);
 	$h_create->execute();
 
+	$stmt = "	CREATE TABLE IF NOT EXISTS mtx.`departments` (
+				  `id` int(11) NOT NULL,
+				  `department` varchar(100) NOT NULL DEFAULT '',
+				  PRIMARY KEY (`department`),
+				  KEY `id` (`id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+	$h_create = $db->prepare($stmt);
+	$h_create->execute();
+
+	$stmt = "select id code, department from mtx.departments order by 1";
+	$h_load_departments = $db->prepare($stmt);
+	$h_load_departments->execute();
+	$result = $h_load_departments->fetchAll(PDO::FETCH_ASSOC);
+	$departments = [];
+	foreach($result as $department) {
+		$departments[$department['code']] = $department['department'];
+	}
+
 	$stmt = "	insert into mtx.hours 
-					(`store`,`ddate`,`code`,`amount`,`hours`)
+					(`store`,`ddate`,`code`,`amount`,`hours`,`department`)
 				values
-					(:store,:ddate,:code,:amount,:hours)
+					(:store,:ddate,:code,:amount,:hours, :department)
 				on duplicate key update 
 				    `code`=:code,
 				    `amount`=:amount,
-				    `hours`=:hours";
+				    `hours`=:hours,
+					`department`=:department";
 	$h_insert_hours = $db->prepare($stmt);
+
+	$stmt = "	insert into mtx.hours
+				select s.store, s.ddate, s.code, 0 amount, 0 hours, d.`department` department 
+				from (select distinct h.store, h.ddate, d.id code from mtx.hours h join mtx.departments as d where h.store = :store and h.ddate = :ddate order by 1,2,3) as s left join 
+				      mtx.hours as h on s.store=h.store and s.ddate=h.ddate and s.code=h.code left join mtx.departments as d on s.code=d.`id` 
+				where h.code is null";
+	$h_insert_missing_departments = $db->prepare($stmt);
 
 	$stmt = "	insert into mtx.control 
 					(`store`,`ddate`,`totalamount`,`totalhours`,`customercount`,`closed`)
@@ -98,12 +126,23 @@ try {
 		$reparti = json_decode($response->getBody()->getContents(), true);
 		if (isset($reparti)) {
 			foreach ($reparti as $reparto) {
+				$h_insert_missing_departments->execute([
+					':store' => $reparto['store'],
+					':ddate' => (new DateTime($reparto['ddate'], $timeZone))->format('Y-m-d')
+				]);
+
+				$department = 'ALTRO';
+				if (key_exists($reparto['code'], $departments)) {
+					$department = $departments[$reparto['code']];
+				}
+
 				$h_insert_hours->execute([
 					':store' => $reparto['store'],
 					':ddate' => (new DateTime($reparto['ddate'], $timeZone))->format('Y-m-d'),
 					':code' => $reparto['code'],
 					':amount' => $reparto['amount'],
-					':hours' => $reparto['hours']
+					':hours' => $reparto['hours'],
+					':department' => $department
 				]);
 
 				$h_insert_control->execute([
