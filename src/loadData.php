@@ -178,7 +178,7 @@ if ($sede != '') {
 
 		// inserisco i reparti mancanti nella giornata negozio per il caricamento ore
 		// -------------------------------------------------------------------------------
-		$stmt = "insert ignore into mtx.hours select :store store, :ddate ddate, id code, 0 amount, 0 hours, department  from departments;";
+		$stmt = "insert ignore into mtx.hours select :store store, :ddate ddate, id code, 0 amount, 0 hours, department  from mtx.departments;";
 		$h_insert_missing_departments = $destinationDb->prepare($stmt);
 
 		// carico la corrispondenza barcode => [codice articolo, reparto]
