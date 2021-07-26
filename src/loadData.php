@@ -176,6 +176,11 @@ if ($sede != '') {
 		$h_query = $destinationDb->prepare($stmt);
 		$h_query->execute();
 
+		// inserisco i reparti mancanti nella giornata negozio per il caricamento ore
+		// -------------------------------------------------------------------------------
+		$stmt = "insert ignore into mtx.hours select :store store, :ddate ddate, id code, 0 amount, 0 hours, department  from departments;";
+		$h_insert_missing_departments = $destinationDb->prepare($stmt);
+
 		// carico la corrispondenza barcode => [codice articolo, reparto]
 		// -------------------------------------------------------------------------------
 		$stmt = "   select b.`BAR13-BAR2` barcode, b.`CODCIN-BAR2` codice, a.`IDSOTTOREPARTO` reparto 
@@ -306,6 +311,7 @@ if ($sede != '') {
 			$inizioCaricamento = (new DateTime())->setTimezone($timeZone);
 			echo "Negozio $sede inizio caricamento giornata del " . $data->format('Y-m-d') . ' : ' . $inizioCaricamento->format('H:i:s') . "\n";
 
+			$h_insert_missing_departments->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
 
 			if ($deletaAll && ! $keepSales) {
 				$h_delete_sales->execute([':ddate' => $data->format('Y-m-d'), ':store' => $sede]);
