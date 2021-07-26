@@ -89,8 +89,6 @@ try {
 				from (select distinct h.store, h.ddate, d.id code from mtx.hours h join mtx.departments as d where h.store = :store and h.ddate = :ddate order by 1,2,3) as s left join 
 				      mtx.hours as h on s.store=h.store and s.ddate=h.ddate and s.code=h.code left join mtx.departments as d on s.code=d.`id` 
 				where h.code is null";
-	$stmt = "insert ignore into mtx.hours select :store store, :ddate ddate, id code, 0 amount, 0 hours, department  from departments;";
-	$h_insert_missing_departments = $db->prepare($stmt);
 
 	$stmt = "	insert into mtx.control 
 					(`store`,`ddate`,`totalamount`,`totalhours`,`customercount`,`closed`)
