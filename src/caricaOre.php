@@ -125,10 +125,6 @@ try {
 		$reparti = json_decode($response->getBody()->getContents(), true);
 		if (isset($reparti)) {
 			foreach ($reparti as $reparto) {
-				$h_insert_missing_departments->execute([
-					':store' => $reparto['store'],
-					':ddate' => (new DateTime($reparto['ddate'], $timeZone))->format('Y-m-d')
-				]);
 
 				$department = 'ALTRO';
 				if (key_exists($reparto['code'], $departments)) {
