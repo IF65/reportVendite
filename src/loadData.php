@@ -212,11 +212,14 @@ if ($sede != '') {
 
 		$stmt = "   select case when store<>:store then :store else store end store, ddate, reg, trans, userno department, barcode, '' articledepartment, '' articlecode, 
                            0 weight, count(*) rowCount, sum(quantita) quantity, sum(totalamount) totalamount, 
-                           sum(case when totalamount<0 then totaltaxableamount*-1 else totaltaxableamount end) totaltaxableamount, '' fidelityCard 
+                           sum(case when totalamount<0 and totaltaxableamount > 0 then totaltaxableamount*-1 when totalamount<0 and totaltaxableamount < 0 then totaltaxableamount else totaltaxableamount end) totaltaxableamount, '' fidelityCard 
 	                from mtx.idc 
 	                where ddate = :data and binary recordtype = 'S' and recordcode1 = 1 and store in ($list)
 	                group by 1,2,3,4,5,6
 	                having totalamount <> 0";
+
+		// vecchia query
+		//sum(case when totalamount<0 then totaltaxableamount*-1 else totaltaxableamount end) totaltaxableamount, '' fidelityCard
 		$h_load_idc = $sourceDb->prepare($stmt);
 
 		// preparo la query di controllo esistenza dati (serve a evitare doppi caricamenti)
