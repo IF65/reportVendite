@@ -216,7 +216,7 @@ if ($sede != '') {
 	                from mtx.idc 
 	                where ddate = :data and binary recordtype = 'S' and recordcode1 = 1 and store in ($list)
 	                group by 1,2,3,4,5,6
-	                having totalamount <> 0";
+	                having totalamount <> 0 or totaltaxableamount <> 0";
 
 		// vecchia query
 		//sum(case when totalamount<0 then totaltaxableamount*-1 else totaltaxableamount end) totaltaxableamount, '' fidelityCard
